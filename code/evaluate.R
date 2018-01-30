@@ -8,11 +8,14 @@ Usage:
 method -m <method_name>
 Options:
 -h --help                                         Show this screen.
--m <method_name> --method=<method_name>           Profiling method name, which could be mean or cov.' -> doc
+-m <method_name> --method=<method_name>           Profiling method name, which could be mean or cov.
+-e <metadata_file> --metadata=<metadata_file>     Path to a csv file containing the association between the Metadata_broad_sample and Metadata_moa. This could be skipped if it is present in the profiles.
+' -> doc
 
 opts <- docopt::docopt(doc)
 
 p <- opts[["method"]]
+meta.file <- opts[["metadata"]]
 
 library(dplyr)
 library(foreach)
@@ -21,6 +24,13 @@ library(readr)
 library(magrittr)
 library(SNFtool)
 library(ggplot2)
+
+if (!is.null(meta.file)) {
+  metadata.df <- readr::read_csv(meta.file)  
+} else {
+  metadata.df <- NULL
+}
+
 
 type.eval <- "global" # global or classification or lift
 profile.type <- p
@@ -133,7 +143,11 @@ if (profile.type != "mix") {
   Pf <- read.and.summarize(profile.type = profile.type)
   profiles.nrm <- Pf$data
   feats <- Pf$feats
-  profiles.meta <- profiles.nrm %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
+  if (!is.null(metadata.df)) {
+    profiles.meta <- metadata.df %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
+  } else {
+    profiles.meta <- profiles.nrm %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
+  }
   
   cr <- cor(profiles.nrm[, feats] %>% t)
   rownames(cr) <- profiles.nrm$Metadata_broad_sample
@@ -161,7 +175,11 @@ if (profile.type != "mix") {
     
   profiles.nrm.1 <- Pf.1$data
   feats.1 <- Pf.1$feats
-  profiles.meta <- profiles.nrm.1 %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
+  if (!is.null(metadata.df)) {
+    profiles.meta <- metadata.df %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
+  } else {
+    profiles.meta <- profiles.nrm %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
+  }
   
   cr.1 <- cor(profiles.nrm.1[, feats.1] %>% t)
   rownames(cr.1) <- profiles.nrm.1$Metadata_broad_sample
