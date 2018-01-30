@@ -26,4 +26,9 @@ pl <- opts[["plate"]]
 proj.name <- opts[["name"]]
 batch.name <- opts[["batch"]]
 
+if(!dir.exists("../output")) {
+  dir.create("../output")
+  dir.create("../tmp")
+}
+
 profile.plate(pl = pl, project.name = proj.name, batch.name = batch.name, n.components = p, rand.density = rand.density, cores = cores)  
