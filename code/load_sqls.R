@@ -8,12 +8,16 @@ library(doParallel)
 
 source("generate_component_matrix.R")
 
-profile.plate <- function(pl, n.components = 3000, rand.density = 0.1, cores = 4) {
+profile.plate <- function(pl, project.name, batch.name, n.components = 3000, rand.density = 0.1, cores = 4) {
     
   doParallel::registerDoParallel(cores = cores)
   
   if (!file.exists(paste0("../input/", pl, ".sqlite"))) {
-    system(command = paste0("aws s3 cp 's3://imaging-platform/projects/2015_10_05_DrugRepurposing_AravindSubramanian_GolubLab_Broad/workspace/backend/2016_04_01_a549_48hr_batch1/", 
+    system(command = paste0("aws s3 cp 's3://imaging-platform/projects/",
+                            project.name, 
+                            "/workspace/backend/",
+                            batch.name,
+                            "/", 
                             pl, 
                             "/", 
                             pl, 
@@ -23,7 +27,11 @@ profile.plate <- function(pl, n.components = 3000, rand.density = 0.1, cores = 4
   }
   
   if (!file.exists(paste0("../input/", pl, "_normalized_variable_selected.csv"))) {
-    system(command = paste0("aws s3 cp 's3://imaging-platform/projects/2015_10_05_DrugRepurposing_AravindSubramanian_GolubLab_Broad/workspace/backend/2016_04_01_a549_48hr_batch1/", 
+    system(command = paste0("aws s3 cp 's3://imaging-platform/projects/",
+                            project.name, 
+                            "/workspace/backend/",
+                            batch.name,
+                            "/", 
                             pl, 
                             "/", 
                             pl, 
