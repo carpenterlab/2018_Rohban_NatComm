@@ -1,0 +1,11 @@
+2nd moment profiling 
+
+In order to profile, run profile.sh. Then, run
+
+./evaluate.R -m mean
+./evaluate.R -m cov
+
+to get the correlation matrices for mean and cov. profiling. 
+
+Finally, run compare_mean_cov.R to compare the mean and "mean+cov." profiling methods.
+
