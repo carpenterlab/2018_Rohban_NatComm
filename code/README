@@ -1,5 +1,7 @@
 2nd moment profiling 
 
+Prereq. : You need to install Cytominer package and aws application. 
+
 In order to profile, run profile.sh. Then, run
 
 ./evaluate.R -m mean
