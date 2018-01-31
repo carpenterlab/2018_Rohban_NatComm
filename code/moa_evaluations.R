@@ -2,6 +2,7 @@ library(dplyr)
 library(stringr)
 library(reshape2)
 library(doParallel)
+library(htmlTable)
 
 same.moa <- function(moa.list.1, moa.list.2) {
   if (is.na(moa.list.1) || is.na(moa.list.2) || moa.list.1 == "" || moa.list.2 == "") 
@@ -222,4 +223,122 @@ cmpd_classification <- function(sm, metadata, k0 = 5) {
   
   #return(cmpd.true.pos/(sm$Var1 %>% unique %>% length))
   return(cmpd.true.pos)
+}
+
+protein.interaction.comparison <- function(sm, interaction.data, extra.interaction.data, metadata, quant, suffix = "") {
+  ## use gather_protein_interaction_data.R to obtain updated versions of the following PPI data
+  ppi <- interaction.data
+  ppi.detailed <- extra.interaction.data
+  cr.org <- sm
+  cr.org <- cr.org %>% 
+    reshape2::melt() %>% 
+    inner_join(metadata, by = c("Var1" = "Metadata_broad_sample")) %>%
+    inner_join(metadata, by = c("Var2" = "Metadata_broad_sample")) %>%
+    select(Metadata_Treatment.x, Metadata_Treatment.y, value) %>%
+    reshape2::acast(Metadata_Treatment.x ~ Metadata_Treatment.y)
+
+  cr <- cr.org
+  
+  genes <- rownames(cr) %>% lapply(., function(x) str_split(x, "_")[[1]][1]) %>% unlist
+  alleles <- rownames(cr) %>% lapply(., function(x) str_split(x, "_")[[1]][2]) %>% unlist %>% 
+    lapply(., function(x) str_split(x, "\\.")[[1]][1]) %>% unlist
+  
+  u <- outer(genes, genes, function(x1, x2) return(x1 == x2))
+  v <- outer(alleles, alleles, function(x1, x2) return(x1 == "WT" & x2 == "WT"))
+  z <- outer(rownames(cr), rownames(cr), function(x, y) return(x < y))
+  
+  w <- u & v & z
+  rownames(w) <- rownames(cr)
+  colnames(w) <- colnames(cr)
+  cr.melt <- melt(cr)
+  w.melt <- melt(w)
+  wt.cr.melt <- cr.melt[which(w.melt$value),]
+  
+  trt.to.go <- c()
+  for (i in 1:length(genes)) {
+    if (alleles[i] == "WT" && (length(trt.to.go) == 0 || !(genes[i] %in% genes[trt.to.go]))) {
+      trt.to.go <- c(trt.to.go, i)
+    } 
+  }
+  cr <- cr[trt.to.go, trt.to.go]
+  
+  cr.melt <- cr %>% 
+    reshape2::melt() 
+    
+  thr <- quantile(cr.melt$value, quant, na.rm = T)
+  
+  consistency.score <- function(cr, ppi, verbose = F, thr = 0.5, ppi.detailed = NULL) {
+    cr.melt <- cr %>% melt
+    cl <- colnames(cr.melt)
+    cl[1] <- "Var1"
+    cl[2] <- "Var2"
+    colnames(cr.melt) <- cl
+    
+    cr.melt.subset <- cr.melt %>% dplyr::filter((Var1 %>% as.character()) < (Var2 %>% as.character()) & (value) >= thr)
+    
+    if (verbose) {
+      print(min(cr.melt.subset$value))
+      print(sprintf("The number of pairs suggested : %d", NROW(cr.melt.subset)))
+    }
+    genes1 <- lapply(cr.melt.subset[,1] %>% as.matrix %>% as.vector, function(x) str_split(x, "_")[[1]][1]) %>% unlist
+    genes2 <- lapply(cr.melt.subset[,2] %>% as.matrix %>% as.vector, function(x) str_split(x, "_")[[1]][1]) %>% unlist
+    gene.pairs <- cbind(genes1, genes2) %>% unique
+    
+    gene.ref <- rownames(ppi)
+    gene.pairs <- gene.pairs[which(gene.pairs[,1] %in% gene.ref & gene.pairs[,2] %in% gene.ref),]
+    sm <- apply(gene.pairs, 1, function(x) return(max(ppi[x[1], x[2]], ppi[x[1], x[2]]))) %>% sum
+    u <- c()
+    if (verbose) {
+      for (i in 1:NROW(gene.pairs)) {
+        if (ppi[gene.pairs[i, 1], gene.pairs[i, 2]] == 1) {
+          if (!is.null(ppi.detailed)) {
+            v <- ppi.detailed %>% dplyr::filter((Protein.1 == gene.pairs[i, 1] & Protein.2 == gene.pairs[i, 2]) | (Protein.2 == gene.pairs[i, 1] & Protein.1 == gene.pairs[i, 2])) 
+            u <- rbind(u, v)
+          }
+        }
+      }
+      
+      if (!is.null(u)) {
+        cut.str <- function(x) {
+          x <- as.character(x)
+          if (str_length(x) > 100) {
+            i <- str_locate(x, "\\)")
+            return(str_sub(x, 1, i[1]))
+          } else {
+            return(x)
+          }
+        }
+        
+        u$Evidence <- lapply(u$Evidence, cut.str) %>% unlist
+        u %>% htmlTable() %>% cat(., file = paste0("evidence_detailed_", suffix, ".html"))
+        u %>% select(Protein.1, Protein.2) %>% unique %>% 
+          mutate(Protein.1.x = ifelse(as.character(Protein.1) < as.character(Protein.2), as.character(Protein.1), as.character(Protein.2)), 
+                 Protein.2.x = ifelse(as.character(Protein.1) < as.character(Protein.2), as.character(Protein.2), as.character(Protein.1))) %>%
+          select(-Protein.1, -Protein.2) %>%
+          rename(Protein.1 = Protein.1.x, Protein.2 = Protein.2.x) %>%
+          unique %>% 
+          htmlTable() %>% cat(., file = paste0("evidence_", suffix, ".html"))
+      }
+    }
+    return(sm)
+  }
+  
+  sig <- consistency.score(cr, ppi, T, thr, ppi.detailed)
+  
+  cr.melt <- cr %>% melt
+  cl <- colnames(cr.melt)
+  cl[1] <- "Var1"
+  cl[2] <- "Var2"
+  colnames(cr.melt) <- cl
+  
+  cr.melt.subset <- cr.melt %>% dplyr::filter((Var1 %>% as.character()) < (Var2 %>% as.character()) & (value) >= thr)
+  
+  genes <- rownames(cr) %>% lapply(., function(x) str_split(x, "_")[[1]][1]) %>% unlist
+  genes.in <- intersect(colnames(ppi), genes)
+  all.verified <- (ppi[genes.in, genes.in] %>% sum())/2
+  x2 <- sig
+  x1 <- NROW(cr.melt.subset) - x2
+  
+  data <- (rbind(c(x2, x1), c(all.verified-x2, NROW(cr) * (NROW(cr) - 1)/2 -all.verified-x1)))
+  fisher.test(data, alternative = "greater") 
 }
