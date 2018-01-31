@@ -1,4 +1,5 @@
-rm(list = ls())
+#!/usr/bin/env Rscript
+
 library(dplyr)
 library(stringr)
 library(foreach)
