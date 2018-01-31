@@ -217,7 +217,7 @@ cmpd_classification <- function(sm, metadata, k0 = 5) {
     #slice(1:k0) %>%
     #summarise(pass = sum(same.moa(Metadata_moa.x, Metadata_moa.y)) >= thr) %>%
     ungroup() %>%
-    #mutate(p.val = stats::p.adjust(p.val)) %>%
+    mutate(p.val = stats::p.adjust(p.val)) %>%
     mutate(pass = (p.val < 0.05) & same.moa(Metadata_moa.x, MOA)) 
   
   #return(cmpd.true.pos/(sm$Var1 %>% unique %>% length))
