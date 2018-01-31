@@ -3,6 +3,7 @@
 .RData
 .Ruserdata
 *.rds
-*.csv
+*_normalized_variable_selected.csv
+*_covariance.csv
 *.sqlite
 *.html

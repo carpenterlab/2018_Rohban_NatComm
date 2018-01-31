@@ -8,7 +8,7 @@ library(doParallel)
 
 source("generate_component_matrix.R")
 
-profile.plate <- function(pl, project.name, batch.name, n.components = 3000, rand.density = 0.1, cores = 4) {
+profile.plate <- function(pl, project.name, batch.name, n.components = 3000, rand.density = 0.1, cores = 4, nrm.column = "Metadata_broad_sample", nrm.value = "DMSO") {
     
   doParallel::registerDoParallel(cores = cores)
   
@@ -118,11 +118,14 @@ profile.plate <- function(pl, project.name, batch.name, n.components = 3000, ran
   cov.metadata <- setdiff(colnames(profiles), cov.variables)
   
   dmso.ids <- prf %>% 
-    filter(Metadata_broad_sample == "DMSO") %>%
+    filter((!!rlang::sym(nrm.column)) == nrm.value) %>%
     select(Metadata_Plate, Metadata_Well)
   
-  samples.nrm <- profiles %>%
-    semi_join(dmso.ids, by = c("Metadata_Plate", "Metadata_Well"))
+  samples.nrm <- profiles %>% 
+    mutate(Metadata_Plate = as.character(Metadata_Plate)) %>%
+    semi_join(dmso.ids %>%
+                mutate(Metadata_Plate = as.character(Metadata_Plate)), 
+              by = c("Metadata_Plate", "Metadata_Well"))
   
   mn <- apply(samples.nrm %>% select(one_of(cov.variables)), 2, function(x) mean(x, na.rm = T))
   sdv <- apply(samples.nrm %>% select(one_of(cov.variables)), 2, function(x) sd(x, na.rm = T))
@@ -134,7 +137,9 @@ profile.plate <- function(pl, project.name, batch.name, n.components = 3000, ran
   profiles.nrm <- cbind(dt.nrm, profiles[, cov.metadata])
   
   profiles.nrm.meta <- profiles.nrm[, cov.metadata] %>% 
-    left_join(prf %>% select(one_of(prf.metadata)), by = c("Metadata_Plate", "Metadata_Well"))
+    mutate(Metadata_Plate = as.character(Metadata_Plate)) %>%
+    left_join(prf %>% select(one_of(prf.metadata)) %>%
+                mutate(Metadata_Plate = as.character(Metadata_Plate)), by = c("Metadata_Plate", "Metadata_Well"))
   
   profiles.nrm <- cbind(profiles.nrm[, cov.variables], profiles.nrm.meta)
   cov.metadata <- setdiff(colnames(profiles.nrm), cov.variables)

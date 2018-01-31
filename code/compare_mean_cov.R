@@ -10,20 +10,22 @@ cr.mean <- cr.melt.mean %>%
   select(Var1, Var2, value) %>%
   reshape2::acast("Var1 ~ Var2") 
 
+k.snf <- round(NROW(cr.mean)^0.5 / 4)
+
 cr.cov <- cr.melt.cov %>%
   select(Var1, Var2, value) %>%
   reshape2::acast("Var1 ~ Var2") 
 
-af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = 7, sigma = 0.5)
-af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = 7, sigma = 0.5)
-af.snf <- SNFtool::SNF(list(af.1, af.2), K = 7, t = 10)
+af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = 0.5)
+af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = 0.5)
+af.snf <- SNFtool::SNF(list(af.1, af.2), K = k.snf, t = 10)
 rownames(af.snf) <- rownames(af.1)
 colnames(af.snf) <- colnames(af.1)
 cr.mean.snf <- af.snf
 
-af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = 7, sigma = 0.5)
-af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.cov, K = 7, sigma = 0.5)
-af.snf <- SNFtool::SNF(list(af.1, af.2), K = 7, t = 10)
+af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = 0.5)
+af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.cov, K = k.snf, sigma = 0.5)
+af.snf <- SNFtool::SNF(list(af.1, af.2), K = k.snf, t = 10)
 rownames(af.snf) <- rownames(af.1)
 colnames(af.snf) <- colnames(af.1)
 cr.mix <- af.snf
@@ -47,8 +49,8 @@ d.mean.sel <- d.mean %>%
 d.mix.sel <- d.mix %>% 
   filter(pass)
 
-d.mean.sel %>% NROW()
-d.mix.sel %>% NROW()
+d.mean.sel %>% NROW() %>% print
+d.mix.sel %>% NROW() %>% print
 
 diff.cmpds <- setdiff(d.mix.sel$Var1, d.mean.sel$Var1)
 d.mix %>% 
@@ -58,7 +60,8 @@ d.mix %>%
   select(-pass) %>%
   rename(p.val.mix = p.val.x, p.val.mean = p.val.y, Compound = Var1) %>%
   arrange(p.val.mix) %>%
-  htmlTable::htmlTable()
+  knitr::kable() %>%
+  print()
   
 diff.cmpds <- setdiff(d.mean.sel$Var1, d.mix.sel$Var1)
 d.mean %>% 
@@ -68,4 +71,5 @@ d.mean %>%
   select(-pass) %>%
   rename(p.val.mix = p.val.y, p.val.mean = p.val.x, Compound = Var1) %>%
   arrange(p.val.mean) %>%
-  htmlTable::htmlTable()
+  knitr::kable() %>%
+  print()

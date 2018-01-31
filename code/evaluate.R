@@ -5,7 +5,7 @@ extends <- methods::extends
 
 'evaluate
 Usage:
-method -m <method_name>
+method -m <method_name> -e <metadata_file>
 Options:
 -h --help                                         Show this screen.
 -m <method_name> --method=<method_name>           Profiling method name, which could be mean or cov.
@@ -57,6 +57,11 @@ read.and.summarize <- function(profile.type) {
   
   print(length(fls))
   
+  if (!"Metadata_mmoles_per_liter" %in% colnames(profiles.nrm)) {
+    profiles.nrm <- profiles.nrm %>%
+      mutate(Metadata_mmoles_per_liter = 10)
+  }
+  
   prf <- profiles.nrm %>% 
     group_by(Metadata_broad_sample, Metadata_mmoles_per_liter) %>%
     summarise_at(.vars = variable.names, .funs = "mean")
@@ -67,8 +72,13 @@ read.and.summarize <- function(profile.type) {
     slice(1) %>%
     ungroup()
   
-  prf %<>% 
-    left_join(profiles.nrm %>% select(Metadata_broad_sample, Metadata_moa) %>% unique, by = "Metadata_broad_sample")
+  if (is.null(metadata.df)) {
+    prf %<>% 
+      left_join(profiles.nrm %>% select(Metadata_broad_sample, Metadata_moa) %>% unique, by = "Metadata_broad_sample")
+  } else {
+    prf %<>% 
+      left_join(metadata.df %>% select(Metadata_broad_sample, Metadata_moa) %>% unique, by = "Metadata_broad_sample")
+  }
   
   profiles.nrm <- prf
   feats <- colnames(prf)
@@ -91,7 +101,7 @@ evaluate.moa <- function(cr, profiles.meta, quant = 0.95, type.eval = "global", 
     return(any(x %in% y) | any(y %in% x))
   }
   match.moas <- Vectorize(match.moas)
-  saveRDS(cr.melt, paste0("cr_",  profile.type, ifelse(profile.type == "mix", c(mix1, mix2), ""), ".rds"))
+  saveRDS(cr.melt, paste0("cr_",  profile.type, ifelse(profile.type == "mix", paste0(mix1, mix2), ""), ".rds"))
   
   if (type.eval == "global") {
     cr.melt <- cr.melt %>% filter(Var1 < Var2)
