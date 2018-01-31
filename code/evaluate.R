@@ -106,7 +106,7 @@ evaluate.moa <- function(cr, profiles.meta, quant = 0.95, type.eval = "global", 
   if (type.eval == "global") {
     cr.melt <- cr.melt %>% filter(Var1 < Var2)
     
-    thr <- quantile(cr.melt$value, quant)
+    thr <- quantile(cr.melt$value, quant, na.rm = T)
     
     v11 <- cr.melt %>% filter(value > thr & match.moas(Metadata_moa.x, Metadata_moa.y)) %>% NROW()
     v12 <- cr.melt %>% filter(value > thr & !match.moas(Metadata_moa.x, Metadata_moa.y)) %>% NROW()
