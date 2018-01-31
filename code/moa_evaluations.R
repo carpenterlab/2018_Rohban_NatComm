@@ -340,5 +340,6 @@ protein.interaction.comparison <- function(sm, interaction.data, extra.interacti
   x1 <- NROW(cr.melt.subset) - x2
   
   data <- (rbind(c(x2, x1), c(all.verified-x2, NROW(cr) * (NROW(cr) - 1)/2 -all.verified-x1)))
+  print(data)
   fisher.test(data, alternative = "greater") 
 }
