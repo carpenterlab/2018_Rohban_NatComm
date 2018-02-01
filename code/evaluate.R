@@ -8,7 +8,7 @@ Usage:
 method -m <method_name> -e <metadata_file>
 Options:
 -h --help                                         Show this screen.
--m <method_name> --method=<method_name>           Profiling method name, which could be mean or cov.
+-m <method_name> --method=<method_name>           Profiling method name, which could be mean or cov, or mix_method1_method2, with method1 and method2 being either of mean or cov.
 -e <metadata_file> --metadata=<metadata_file>     Path to a csv file containing the association between the Metadata_broad_sample and Metadata_moa. This could be skipped if it is present in the profiles.
 ' -> doc
 
@@ -33,10 +33,15 @@ if (!is.null(meta.file)) {
 
 
 type.eval <- "global" # global or classification or lift
+if (str_detect(p, "_")) {
+	t1 <- str_split(p, "_")[[1]][1]
+	mix1 <- str_split(p, "_")[[1]][2]
+	mix2 <- str_split(p, "_")[[1]][3]
+	p <- "mix"
+}
+
 profile.type <- p
 print(p)
-mix1 <- "mean"
-mix2 <- "cov"
 quant <- 0.99
 
 read.and.summarize <- function(profile.type) {
