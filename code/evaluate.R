@@ -211,7 +211,7 @@ if (profile.type != "mix") {
   rownames(cr.2) <- profiles.nrm.2$Metadata_broad_sample
   colnames(cr.2) <- profiles.nrm.2$Metadata_broad_sample
   
-  cm.rn <- intersect(rownames(cr.1), rownames(cr.2))
+  cm.rn <- setdiff(intersect(rownames(cr.1), rownames(cr.2)), NA)
   
   cr.1 <- cr.1[cm.rn, cm.rn]
   cr.2 <- cr.2[cm.rn, cm.rn]
