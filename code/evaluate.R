@@ -54,6 +54,15 @@ read.and.summarize <- function(profile.type) {
   
   variable.names <- colnames(profiles.nrm)
   variable.names <- variable.names[which(!str_detect(variable.names, "Metadata_"))]
+
+  # in some special cases of mean profiles (e.g. CDRP), there seems to be Inf, and NA value.
+  # this is to treat those cases
+  if (profile.type != "cov") {
+    meta.cols <- setdiff(colnames(profiles.nrm), variable.names)
+    ids <- apply(profiles.nrm[,variable.names], 2, function(x) !any(is.na(x) | is.nan(x) | is.infinite(x) | sd(x) > 10)) %>% which
+    variable.names <- variable.names[ids]
+    profiles.nrm <- profiles.nrm %>% select(one_of(c(meta.cols, variable.names)))
+  }
   
   print(length(fls))
   
