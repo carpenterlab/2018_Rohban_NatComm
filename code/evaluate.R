@@ -5,7 +5,7 @@ extends <- methods::extends
 
 'evaluate
 Usage:
-method -m <method_name> -e <metadata_file>
+method -m <method_name> [-e <metadata_file>]
 Options:
 -h --help                                         Show this screen.
 -m <method_name> --method=<method_name>           Profiling method name, which could be mean or cov, or mix_method1_method2, with method1 and method2 being either of mean or cov.
@@ -202,7 +202,7 @@ if (profile.type != "mix") {
   if (!is.null(metadata.df)) {
     profiles.meta <- metadata.df %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
   } else {
-    profiles.meta <- profiles.nrm %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
+    profiles.meta <- profiles.nrm.1 %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
   }
   
   cr.1 <- cor(profiles.nrm.1[, feats.1] %>% t)
