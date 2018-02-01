@@ -196,6 +196,31 @@ signif.test <- function(x, k0) {
     slice(1) 
 }
 
+cmpd_knn_classification <- function(sm, metadata, k0 = 5) {
+  sm <- sm %>% 
+    reshape2::melt() %>% 
+    filter(Var1 != Var2 &
+             Var1 != "DMSO" &
+             Var2 != "DMSO") %>%
+    left_join(., 
+              metadata, 
+              by = c("Var1" = "Metadata_broad_sample")) %>%
+    left_join(., 
+              metadata, 
+              by = c("Var2" = "Metadata_broad_sample")) %>%
+    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y))
+  
+  return(
+    sm %>% 
+      arrange(-value) %>% 
+      group_by(Var1, Metadata_moa.x) %>% 
+      slice(1:(1+k0)) %>% 
+      summarise(pass = any(same.moa(Metadata_moa.x, Metadata_moa.y))) %>% 
+      filter(pass) 
+  )
+}
+
+  
 cmpd_classification <- function(sm, metadata, k0 = 5) {
   sm <- sm %>% 
     reshape2::melt() %>% 
