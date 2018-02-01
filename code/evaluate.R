@@ -211,7 +211,10 @@ if (profile.type != "mix") {
   rownames(cr.2) <- profiles.nrm.2$Metadata_broad_sample
   colnames(cr.2) <- profiles.nrm.2$Metadata_broad_sample
   
-  cr.1 <- cr.1[rownames(cr.2), colnames(cr.2)]
+  cm.rn <- intersect(rownames(cr.1), rownames(cr.2))
+  
+  cr.1 <- cr.1[cm.rn, cm.rn]
+  cr.2 <- cr.2[cm.rn, cm.rn]
   
   af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.1, K = 7, sigma = 0.5)
   af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.2, K = 7, sigma = 0.5)
