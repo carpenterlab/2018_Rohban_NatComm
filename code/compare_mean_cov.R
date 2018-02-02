@@ -1,9 +1,13 @@
 rm(list = ls())
 
 library(dplyr)
+library(ggplot2)
+
 source("moa_evaluations.R")
 
 enrichment.based.classification <- FALSE
+k.snf <- 7     # neighborhood size in SNF
+k <- 1:10      # k top hits are used for classification
 
 cr.melt.mean <- readRDS("cr_mean.rds")
 cr.melt.cov <- readRDS("cr_cov.rds")
@@ -14,14 +18,21 @@ cr.mean <- cr.melt.mean %>%
   summarise(value = max(value)) %>%
   reshape2::acast("Var1 ~ Var2") 
 
-k.snf <- 7     # neighborhood size in SNF
-k <- 1:10      # k top hits are used for classification
-
 cr.cov <- cr.melt.cov %>%
   select(Var1, Var2, value) %>%
   group_by(Var1, Var2) %>%
   summarise(value = max(value)) %>%
   reshape2::acast("Var1 ~ Var2")
+
+d <- apply(cr.mean, 1, function(x) !(sum(is.na(x)) >= (NROW(cr.mean) -1 )))
+cr.mean <- cr.mean[d, d]
+
+d <- apply(cr.cov, 1, function(x) !(sum(is.na(x)) >= (NROW(cr.cov) -1 )))
+cr.cov <- cr.cov[d, d]
+
+cm.rn <- setdiff(intersect(rownames(cr.mean), rownames(cr.cov)), NA)
+cr.mean <- cr.mean[cm.rn, cm.rn]
+cr.cov <- cr.cov[cm.rn, cm.rn]
 
 af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = 0.5)
 af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.cov, K = k.snf, sigma = 0.5)
@@ -75,8 +86,8 @@ if (enrichment.based.classification) {
       knitr::kable() %>%
       print()
   } else {
-    l.mean <- lapply(d.mean, function(x) sum(x$pass))
-    l.mix <- lapply(d.mix, function(x) sum(x$pass))
+    l.mean <- lapply(d.mean["pass", ], function(x) sum(x)) 
+    l.mix <- lapply(d.mix["pass", ], function(x) sum(x))
     
     D <- data.frame(method = "mean", k = k, tp = (unlist(l.mean)))
     D <- rbind(D, 
@@ -84,8 +95,11 @@ if (enrichment.based.classification) {
     g <- ggplot(D, aes(x = k, y = tp, color = method)) + 
       geom_point() + 
       geom_line() + 
-      ylab("No. of compounds with a same MOA compound in its k-NNs")
-    print(g)
+      scale_y_continuous(limits = c(0, NA)) +
+      scale_x_continuous(breaks = k, minor_breaks = k) +
+      ylab("No. of compounds with a \n same MOA compound in their k-NNs")
+    print(g)    
+    ggsave("classification_comparison.png", g, width = 7, height = 5)
   }
 } else {
   d.mean <- cmpd_knn_classification(cr.mean, metadata, k) 
@@ -115,8 +129,8 @@ if (enrichment.based.classification) {
       htmlTable::htmlTable() %>%
       print
   } else {
-    l.mean <- lapply(d.mean, function(x) sum(x$pass))
-    l.mix <- lapply(d.mix, function(x) sum(x$pass))
+    l.mean <- lapply(d.mean["pass", ], function(x) sum(x)) 
+    l.mix <- lapply(d.mix["pass", ], function(x) sum(x))
     
     D <- data.frame(method = "mean", k = k, tp = (unlist(l.mean)))
     D <- rbind(D, 
@@ -124,7 +138,10 @@ if (enrichment.based.classification) {
     g <- ggplot(D, aes(x = k, y = tp, color = method)) + 
       geom_point() + 
       geom_line() + 
-      ylab("No. of compounds with a same MOA compound in its k-NNs")
-    print(g)    
+      scale_y_continuous(limits = c(0, NA)) +
+      scale_x_continuous(breaks = k, minor_breaks = k) +
+      ylab("No. of compounds with a \n same MOA compound in their k-NNs")
+    print(g) 
+    ggsave("classification_comparison.png", g, width = 7, height = 5)
   }
 }
