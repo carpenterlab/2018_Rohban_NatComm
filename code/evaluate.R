@@ -215,6 +215,12 @@ if (profile.type != "mix") {
   cr.2 <- cor(profiles.nrm.2[, feats.2] %>% t)
   rownames(cr.2) <- profiles.nrm.2$Metadata_broad_sample
   colnames(cr.2) <- profiles.nrm.2$Metadata_broad_sample
+
+  d <- apply(cr.1, 1, function(x) !(sum(is.na(x)) >= (NROW(cr.1) -1 )))
+  cr.1 <- cr.1[d, d]
+
+  d <- apply(cr.2, 1, function(x) !(sum(is.na(x)) >= (NROW(cr.2) -1 )))
+  cr.2 <- cr.2[d, d]
   
   cm.rn <- setdiff(intersect(rownames(cr.1), rownames(cr.2)), NA)
   
