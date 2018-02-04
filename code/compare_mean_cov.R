@@ -55,6 +55,12 @@ if (enrichment.based.classification) {
   d.mix <- cmpd_classification(sm = cr.mix, metadata = metadata, k0 = k)
   
   if (length(k) == 1) {
+    d.mean <- (d.mean %>% t) %>% apply(., 2, function(x) {y <- data.frame(as.vector(x)); names(y) <- names(x); y}) 
+    d.mix <- (d.mix %>% t) %>% apply(., 2, function(x) {y <- data.frame(as.vector(x)); names(y) <- names(x); y}) 
+    
+    d.mean <- d.mean %>% as.data.frame()
+    d.mix <- d.mix %>% as.data.frame()
+    
     d.mean.sel <- d.mean %>%
       filter(pass)
     
