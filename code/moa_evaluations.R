@@ -26,6 +26,7 @@ enrichment_top_conn <- function(sm, metadata, top.perc = 0.95) {
     left_join(., 
               metadata, 
               by = c("Var2" = "Metadata_broad_sample")) %>%
+    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y)) %>%
     mutate(same.moa = same.moa(Metadata_moa.x, Metadata_moa.y))
   
   thr <- quantile(sm$value, top.perc, na.rm = T)
