@@ -173,3 +173,27 @@ if (enrichment.based.classification) {
     ggsave("classification_comparison.png", g, width = 7, height = 5)
   }
 }
+
+top.prec <- seq(from = 0.98, to = 0.999, by = 0.002)
+enrichment_top_conn <- Vectorize(enrichment_top_conn, vectorize.args = "top.perc")
+mean.res <- enrichment_top_conn(sm = cr.mean, metadata = metadata, top.perc = top.prec)
+mix.res <- enrichment_top_conn(sm = cr.mix, metadata = metadata, top.perc = top.prec)
+
+mean.res <- mean.res["estimate",] %>% unlist %>% unname()
+mix.res <- mix.res["estimate",] %>% unlist %>% unname()
+
+D1 <- data.frame(top.prec = top.prec * 100, odds.ratio = mean.res, method = "mean")
+D2 <- data.frame(top.prec = top.prec * 100, odds.ratio = mix.res, method = "mean+cov.")
+
+D <- rbind(D1, D2)
+
+g <- ggplot(D, aes(x = top.prec, y = odds.ratio, color = method)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_x_continuous(breaks = top.prec[seq(from = 1, to = length(top.prec), by = 2)] * 100, minor_breaks = top.prec * 100) +
+  ylab("No. of folds of enrichment \n for top p% conn. to have same Pathway") + 
+  xlab("p")
+print(g) 
+ggsave("global_comparison.png", g, width = 7, height = 5)
+
