@@ -5,17 +5,24 @@ extends <- methods::extends
 
 'evaluate
 Usage:
-method -m <method_name> [-e <metadata_file>]
+method -m <method_name> [-e <metadata_file> -f <feat_list_file>]
 Options:
 -h --help                                         Show this screen.
 -m <method_name> --method=<method_name>           Profiling method name, which could be mean or cov, or mix_method1_method2, with method1 and method2 being either of mean or cov.
 -e <metadata_file> --metadata=<metadata_file>     Path to a csv file containing the association between the Metadata_broad_sample and Metadata_moa. This could be skipped if it is present in the profiles.
+-f <feat_list_file> --feats=<feat_list_file>       Path to a text file containing the list of features to be used for the mean profiles.
 ' -> doc
 
 opts <- docopt::docopt(doc)
 
 p <- opts[["method"]]
 meta.file <- opts[["metadata"]]
+feat.list <- opts[["feats"]]
+
+if (!is.null(feat.list)) {
+  feat.list <- readr::read_csv(feat.list, col_names = F)  
+  feat.list <- unname(unlist(feat.list))
+}
 
 library(dplyr)
 library(foreach)
@@ -52,7 +59,7 @@ read.and.summarize <- function(profile.type) {
       x <- readr::read_csv(paste0("../output/", fl))  
     } else {
       pl <- str_split(fl, "_")[[1]][1]
-      x <- readr::read_csv(paste0("../input/", pl, "_normalized_variable_selected.csv"))  
+      x <- readr::read_csv(paste0("../input/", pl, "_normalized.csv"))  
     }
     x
   }
@@ -64,8 +71,14 @@ read.and.summarize <- function(profile.type) {
   # this is to treat those cases
   if (profile.type != "cov") {
     meta.cols <- setdiff(colnames(profiles.nrm), variable.names)
-    ids <- apply(profiles.nrm[,variable.names], 2, function(x) !any(is.na(x) | is.nan(x) | is.infinite(x) | sd(x) > 10)) %>% which
-    variable.names <- variable.names[ids]
+    
+    if (is.null(feat.list)) {
+      ids <- apply(profiles.nrm[,variable.names], 2, function(x) !any(is.na(x) | is.nan(x) | is.infinite(x) | sd(x) > 10)) %>% which
+      variable.names <- variable.names[ids]
+    } else {
+      variable.names <- feat.list
+    }
+    
     profiles.nrm <- profiles.nrm %>% select(one_of(c(meta.cols, variable.names)))
   }
   

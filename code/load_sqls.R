@@ -8,8 +8,8 @@ library(doParallel)
 
 source("generate_component_matrix.R")
 
-profile.plate <- function(pl, project.name, batch.name, n.components = 3000, rand.density = 0.1, cores = 4, nrm.column = "Metadata_broad_sample", nrm.value = "DMSO") {
-    
+profile.plate <- function(pl, project.name, batch.name, n.components = 3000, rand.density = 0.1, cores = 4, nrm.column = "Metadata_broad_sample", nrm.value = "DMSO", feat.list = NULL) {
+  
   doParallel::registerDoParallel(cores = cores)
   
   if (!file.exists(paste0("../input/", pl, ".sqlite"))) {
@@ -26,7 +26,7 @@ profile.plate <- function(pl, project.name, batch.name, n.components = 3000, ran
                             ".sqlite"))
   }
   
-  if (!file.exists(paste0("../input/", pl, "_normalized_variable_selected.csv"))) {
+  if (!file.exists(paste0("../input/", pl, "_normalized.csv"))) {
     system(command = paste0("aws s3 cp 's3://imaging-platform/projects/",
                             project.name, 
                             "/workspace/backend/",
@@ -35,20 +35,23 @@ profile.plate <- function(pl, project.name, batch.name, n.components = 3000, ran
                             pl, 
                             "/", 
                             pl, 
-                            "_normalized_variable_selected.csv' ../input/",
+                            "_normalized.csv' ../input/",
                             pl,
-                            "_normalized_variable_selected.csv"))
+                            "_normalized.csv"))
   }
   
   prf <- readr::read_csv(paste0("../input/",
-                          pl,
-                         "_normalized_variable_selected.csv"))
+                                pl,
+                                "_normalized.csv"))
   
   sites.all <- unique(prf$Metadata_Well)
   
   variables <- colnames(prf)
   variables <- variables[which(!str_detect(variables, "Metadata_"))]
   prf.metadata <- setdiff(colnames(prf), variables)
+  if (!is.null(feat.list)) {
+    variables <- feat.list
+  }
   
   sqlite_file <- paste0("../input/", pl, ".sqlite")
   db <- DBI::dbConnect(RSQLite::SQLite(), sqlite_file)
@@ -94,7 +97,7 @@ profile.plate <- function(pl, project.name, batch.name, n.components = 3000, ran
         dplyr::inner_join(cytoplasm.sub, by = "ObjectNumber") %>%
         dplyr::inner_join(nuclei.sub, by = "ObjectNumber") %>%
         dplyr::inner_join(image.sub, by = image_object_join_columns) 
-        
+      
       dt
     }
     
@@ -115,6 +118,8 @@ profile.plate <- function(pl, project.name, batch.name, n.components = 3000, ran
   
   cov.variables <- colnames(profiles)
   cov.variables <- cov.variables[which(str_detect(cov.variables, "Cells_") | str_detect(cov.variables, "Cytoplasm_") | str_detect(cov.variables, "Nuclei_"))]
+  saveRDS(cov.variables, "../tmp/cov_var.rds")
+  
   cov.metadata <- setdiff(colnames(profiles), cov.variables)
   
   dmso.ids <- prf %>% 
@@ -144,11 +149,11 @@ profile.plate <- function(pl, project.name, batch.name, n.components = 3000, ran
   profiles.nrm <- cbind(profiles.nrm[, cov.variables], profiles.nrm.meta)
   cov.metadata <- setdiff(colnames(profiles.nrm), cov.variables)
   
-  if (!file.exists("../input/random_projection.rds")) {
+  if (!file.exists("../input/random_projection_unified.rds")) {
     rand.proj <- generate_component_matrix(n_features = length(cov.variables), n_components = n.components, density = rand.density)
-    saveRDS(rand.proj, "../input/random_projection.rds")
+    saveRDS(rand.proj, "../input/random_projection_unified.rds")
   } else {
-    rand.proj <- readRDS("../input/random_projection.rds")
+    rand.proj <- readRDS("../input/random_projection_unified.rds")
   }
   
   dt <- as.matrix(profiles.nrm[, cov.variables])

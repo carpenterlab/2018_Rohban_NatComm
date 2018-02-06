@@ -4,8 +4,9 @@
 .Ruserdata
 cr_*.rds
 tmp/
-random_projection*.rds
+random_projection.rds
 *_normalized_variable_selected.csv
+*_normalized.csv
 *_covariance.csv
 *.sqlite
 *.html
