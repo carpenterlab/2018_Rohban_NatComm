@@ -4,6 +4,14 @@ library(reshape2)
 library(doParallel)
 library(htmlTable)
 
+sim_normalize <- function(sim_mat) {
+  sim_mat_norm <- apply(sim_mat, 1, function(x) (ecdf(x)(x)))
+  sim_mat_norm <- (sim_mat_norm + t(sim_mat_norm))/2
+  rownames(sim_mat_norm) <- rownames(sim_mat)
+  colnames(sim_mat_norm) <- colnames(sim_mat)
+  return(sim_mat_norm)
+}
+
 same.moa <- function(moa.list.1, moa.list.2) {
   if (is.na(moa.list.1) || is.na(moa.list.2) || moa.list.1 == "" || moa.list.2 == "") 
     return(FALSE)
@@ -49,6 +57,44 @@ enrichment_top_conn <- function(sm, metadata, top.perc = 0.95) {
   
   return(fisher.test(x = rbind(c(v11, v12), c(v21, v22)), 
                      alternative = "greater"))
+}
+
+enrichment_top_conn_cross <- function(sm, metadata1, metadata2, top.perc = 0.95) {
+  sm <- sm %>% 
+    reshape2::melt() %>% 
+    filter(Var1 != "DMSO" &
+           Var2 != "DMSO") %>%
+    left_join(., 
+              metadata1, 
+              by = c("Var1" = "Metadata_broad_sample")) %>%
+    left_join(., 
+              metadata2, 
+              by = c("Var2" = "Metadata_broad_sample")) %>%
+    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y)) %>%
+    mutate(same.moa = same.moa(str_to_lower(Metadata_moa.x), str_to_lower(Metadata_moa.y)))
+  
+  thr <- quantile(sm$value, top.perc, na.rm = T)
+  
+  v11 <- sm %>%
+    filter(value > thr & same.moa) %>%
+    NROW
+  
+  v12 <- sm %>%
+    filter(value > thr & !same.moa) %>%
+    NROW
+  
+  v21 <- sm %>%
+    filter(value < thr & same.moa) %>%
+    NROW
+  
+  v22 <- sm %>%
+    filter(value < thr & !same.moa) %>%
+    NROW
+  
+  V <- rbind(c(v11, v12), c(v21, v22))
+  return(list(top.conn.valid = sm %>%
+                filter(value > thr & same.moa), V = V, test = fisher.test(x = V, 
+                     alternative = "greater")))
 }
 
 contains.moa <- function(moa.list, moa) {
