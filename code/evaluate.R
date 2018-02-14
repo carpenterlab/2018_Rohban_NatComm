@@ -10,7 +10,7 @@ Options:
 -h --help                                         Show this screen.
 -m <method_name> --method=<method_name>           Profiling method name, which could be mean or cov, or mix_method1_method2, with method1 and method2 being either of mean or cov.
 -e <metadata_file> --metadata=<metadata_file>     Path to a csv file containing the association between the Metadata_broad_sample and Metadata_moa. This could be skipped if it is present in the profiles.
--f <feat_list_file> --feats=<feat_list_file>       Path to a text file containing the list of features to be used for the mean profiles.
+-f <feat_list_file> --feats=<feat_list_file>      Path to a text file containing the list of features to be used for the mean profiles.
 ' -> doc
 
 opts <- docopt::docopt(doc)
@@ -19,10 +19,6 @@ p <- opts[["method"]]
 meta.file <- opts[["metadata"]]
 feat.list <- opts[["feats"]]
 
-if (!is.null(feat.list)) {
-  feat.list <- readr::read_csv(feat.list, col_names = F)  
-  feat.list <- unname(unlist(feat.list))
-}
 
 library(dplyr)
 library(foreach)
@@ -32,12 +28,22 @@ library(magrittr)
 library(SNFtool)
 library(ggplot2)
 
+if (!is.null(feat.list)) {
+  feat.list <- readr::read_csv(feat.list, col_names = F)  
+  feat.list <- unname(unlist(feat.list))
+}
+
+if (str_detect(p, "\\+") & !is.null(feat.list)) {
+  p1 <- str_split(p, "\\+")[[1]][1]  
+  p2 <- str_split(p, "\\+")[[1]][2]  
+  feat.list <- c(paste0(feat.list, "_", p1), paste0(feat.list, "_", p2))
+}
+
 if (!is.null(meta.file)) {
   metadata.df <- readr::read_csv(meta.file)  
 } else {
   metadata.df <- NULL
 }
-
 
 type.eval <- "global" # global or classification or lift
 if (str_detect(p, "_")) {
@@ -57,9 +63,25 @@ read.and.summarize <- function(profile.type) {
   profiles.nrm <- foreach (fl = fls, .combine = rbind) %do% {
     if (profile.type == "cov") {
       x <- readr::read_csv(paste0("../output/", fl))  
-    } else {
+    } else if (profile.type == "mean") {
       pl <- str_split(fl, "_")[[1]][1]
       x <- readr::read_csv(paste0("../input/", pl, "_normalized.csv"))  
+      if (!is.null(feat.list)) {
+        x <- x %>%
+          select(matches("Metadata_"), one_of(feat.list))
+      }
+    } else if (str_detect(profile.type, "\\+")) {
+      p1 <- str_split(p, "\\+")[[1]][1]  
+      p2 <- str_split(p, "\\+")[[1]][2]  
+      pl <- str_split(fl, "_")[[1]][1]
+      init <- list.dirs("../backend", recursive = F)
+      fl.name <- paste0(init, "/", pl, "/", pl, "_normalized_", p1, "_", p2, ".csv")
+      if (file.exists(fl.name)) {
+        x <- readr::read_csv(fl.name)    
+      } else {
+        x <- NULL
+        warning(paste0("Plate ", pl, " is missing."))
+      }
     }
     x
   }
@@ -185,7 +207,7 @@ if (profile.type != "mix") {
   } else {
     profiles.meta <- profiles.nrm %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
   }
-  
+
   cr <- cor(profiles.nrm[, feats] %>% t)
   rownames(cr) <- profiles.nrm$Metadata_broad_sample
   colnames(cr) <- profiles.nrm$Metadata_broad_sample
