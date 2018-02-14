@@ -11,3 +11,6 @@ random_projection.rds
 *.sqlite
 *.html
 *.png
+metadata/*
+backend/*
+tmp_trad/*
