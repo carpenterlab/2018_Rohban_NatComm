@@ -78,13 +78,6 @@ read.and.summarize <- function(profile.type, path, feat.list, metadata.df) {
   return(list(data = profiles.nrm, feats = feats))
 }
 
-if (is.null(metadata.repurp)) {
-  metadata.repurp <- Pf.2.cov$data %>%
-    select(matches("Metadata_")) %>%
-    unique %>%
-    mutate(Metadata_broad_sample = str_sub(Metadata_broad_sample, 1, 13))
-}
-
 metadata.cdrp <- metadata.cdrp %>%
   mutate(Metadata_broad_sample = str_sub(Metadata_broad_sample, 1, 13))
 
