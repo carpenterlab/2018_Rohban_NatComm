@@ -11,8 +11,15 @@ k <- 1:10      # k top hits are used for classification
 
 cr.melt.mean <- readRDS("cr_mean.rds")
 cr.melt.cov <- readRDS("cr_cov.rds")
+cr.melt.median.mad <- readRDS("cr_median+mad.rds")
 
 cr.mean <- cr.melt.mean %>%
+  select(Var1, Var2, value) %>%
+  group_by(Var1, Var2) %>%
+  summarise(value = max(value)) %>%
+  reshape2::acast("Var1 ~ Var2") 
+
+cr.median.mad <- cr.melt.median.mad %>%
   select(Var1, Var2, value) %>%
   group_by(Var1, Var2) %>%
   summarise(value = max(value)) %>%
@@ -55,6 +62,7 @@ cr.cov <- cr.cov[d, d]
 cm.rn <- setdiff(intersect(rownames(cr.mean), rownames(cr.cov)), NA)
 cr.mean <- cr.mean[cm.rn, cm.rn]
 cr.cov <- cr.cov[cm.rn, cm.rn]
+cr.median.mad <- cr.median.mad[cm.rn, cm.rn]
 
 af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = 0.5)
 af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.cov, K = k.snf, sigma = 0.5)
@@ -131,6 +139,7 @@ if (enrichment.based.classification) {
   }
 } else {
   d.mean <- cmpd_knn_classification(cr.mean, metadata, k) 
+  d.median.mad <- cmpd_knn_classification(cr.median.mad, metadata, k) 
   d.mix <- cmpd_knn_classification(cr.mix, metadata, k) 
   
   if (length(k) == 1) {
@@ -158,12 +167,17 @@ if (enrichment.based.classification) {
       print
   } else {
     l.mean <- lapply(d.mean["pass", ], function(x) sum(x)) 
+    l.median.mad <- lapply(d.median.mad["pass", ], function(x) sum(x)) 
     l.mix <- lapply(d.mix["pass", ], function(x) sum(x))
     
     D <- data.frame(method = "mean", k = k, tp = (unlist(l.mean)))
     D <- rbind(D, 
                data.frame(method = "mean+cov.", k = k, tp = (unlist(l.mix))))
-    g <- ggplot(D, aes(x = k, y = tp, color = method)) + 
+    D <- rbind(D, 
+               data.frame(method = "median+mad", k = k, tp = (unlist(l.median.mad))))
+    D <- D %>% mutate(method = factor(method, levels = sort(unique(as.character(D$method)))))
+    
+    g <- ggplot(D, aes(x = k, y = tp, color = method, order = as.character(method))) + 
       geom_point() + 
       geom_line() + 
       scale_y_continuous(limits = c(0, NA)) +
@@ -177,17 +191,24 @@ if (enrichment.based.classification) {
 top.prec <- seq(from = 0.98, to = 0.999, by = 0.002)
 enrichment_top_conn <- Vectorize(enrichment_top_conn, vectorize.args = "top.perc")
 mean.res <- enrichment_top_conn(sm = cr.mean, metadata = metadata, top.perc = top.prec)
+median.mad.res <- enrichment_top_conn(sm = cr.median.mad, metadata = metadata, top.perc = top.prec)
 mix.res <- enrichment_top_conn(sm = cr.mix, metadata = metadata, top.perc = top.prec)
 
 mean.res <- mean.res["estimate",] %>% unlist %>% unname()
+median.mad.res <- median.mad.res["estimate",] %>% unlist %>% unname()
 mix.res <- mix.res["estimate",] %>% unlist %>% unname()
 
+
 D1 <- data.frame(top.prec = top.prec * 100, odds.ratio = mean.res, method = "mean")
-D2 <- data.frame(top.prec = top.prec * 100, odds.ratio = mix.res, method = "mean+cov.")
+D2 <- data.frame(top.prec = top.prec * 100, odds.ratio = median.mad.res, method = "median+mad")
+D3 <- data.frame(top.prec = top.prec * 100, odds.ratio = mix.res, method = "mean+cov.")
 
 D <- rbind(D1, D2)
+D <- rbind(D, D3)
+D <- D %>% mutate(method = factor(method, levels = sort(unique(as.character(D$method)))))
 
-g <- ggplot(D, aes(x = top.prec, y = odds.ratio, color = method)) + 
+
+g <- ggplot(D, aes(x = top.prec, y = odds.ratio, color = method, order = method)) + 
   geom_point() + 
   geom_line() + 
   scale_y_continuous(limits = c(0, NA)) +
