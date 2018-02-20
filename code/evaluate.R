@@ -33,12 +33,6 @@ if (!is.null(feat.list)) {
   feat.list <- unname(unlist(feat.list))
 }
 
-if (str_detect(p, "\\+") & !is.null(feat.list)) {
-  p1 <- str_split(p, "\\+")[[1]][1]  
-  p2 <- str_split(p, "\\+")[[1]][2]  
-  feat.list <- c(paste0(feat.list, "_", p1), paste0(feat.list, "_", p2))
-}
-
 if (!is.null(meta.file)) {
   metadata.df <- readr::read_csv(meta.file)  
 } else {
@@ -58,7 +52,9 @@ print(p)
 quant <- 0.99
 
 read.and.summarize <- function(profile.type) {
-  fls <- list.files("../output")
+  #fls <- list.files("../output")
+  fls <- paste0(list.files("../backend/CDRP"), "_covariance.csv")
+  feat.list.s <- feat.list
   
   profiles.nrm <- foreach (fl = fls, .combine = rbind) %do% {
     if (profile.type == "cov") {
@@ -71,8 +67,15 @@ read.and.summarize <- function(profile.type) {
           select(matches("Metadata_"), one_of(feat.list))
       }
     } else if (str_detect(profile.type, "\\+")) {
-      p1 <- str_split(p, "\\+")[[1]][1]  
-      p2 <- str_split(p, "\\+")[[1]][2]  
+      p1 <- str_split(profile.type, "\\+")[[1]][1]  
+      p2 <- str_split(profile.type, "\\+")[[1]][2]  
+      
+      if (!is.null(feat.list)) {
+        p1 <- str_split(profile.type, "\\+")[[1]][1]  
+        p2 <- str_split(profile.type, "\\+")[[1]][2]  
+        feat.list.s <- c(paste0(feat.list, "_", p1), paste0(feat.list, "_", p2))
+      }
+      
       pl <- str_split(fl, "_")[[1]][1]
       init <- list.dirs("../backend", recursive = F)
       fl.name <- paste0(init, "/", pl, "/", pl, "_normalized_", p1, "_", p2, ".csv")
@@ -98,7 +101,7 @@ read.and.summarize <- function(profile.type) {
       ids <- apply(profiles.nrm[,variable.names], 2, function(x) !any(is.na(x) | is.nan(x) | is.infinite(x) | sd(x) > 10)) %>% which
       variable.names <- variable.names[ids]
     } else {
-      variable.names <- feat.list
+      variable.names <- feat.list.s
     }
     
     profiles.nrm <- profiles.nrm %>% select(one_of(c(meta.cols, variable.names)))
