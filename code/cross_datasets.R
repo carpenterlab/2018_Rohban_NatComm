@@ -17,18 +17,40 @@ metadata.repurp <- NULL
 
 read.and.summarize <- function(profile.type, path, feat.list, metadata.df) {
   fls <- list.files(paste0(path, "/output"))
+  feat.list.s <- feat.list
   
   profiles.nrm <- foreach (fl = fls, .combine = rbind) %do% {
     if (profile.type == "cov") {
       x <- readr::read_csv(paste0(path, "/output/", fl))  
-    } else {
+    } else if (profile.type == "mean") {
       pl <- str_split(fl, "_")[[1]][1]
       x <- readr::read_csv(paste0(path, "/input/", pl, "_normalized.csv"))  
       x <- x %>% select(matches("Metadata_"), one_of(feat.list))
+    } else if (str_detect(profile.type, "\\+")) {
+      p1 <- str_split(profile.type, "\\+")[[1]][1]  
+      p2 <- str_split(profile.type, "\\+")[[1]][2]  
+      
+      if (!is.null(feat.list)) {
+        p1 <- str_split(profile.type, "\\+")[[1]][1]  
+        p2 <- str_split(profile.type, "\\+")[[1]][2]  
+        feat.list.s <- c(paste0(feat.list, "_", p1), paste0(feat.list, "_", p2))
+      }
+      
+      pl <- str_split(fl, "_")[[1]][1]
+      init <- list.dirs(paste0(path, "/backend"), recursive = F)
+      fl.name <- paste0(init, "/", pl, "/", pl, "_normalized_", p1, "_", p2, ".csv")
+      if (file.exists(fl.name)) {
+        x <- readr::read_csv(fl.name)    
+      } else {
+        x <- NULL
+        warning(paste0("Plate ", pl, " is missing."))
+      }
     }
+    
     x
   }
-    variable.names <- colnames(profiles.nrm)
+  
+  variable.names <- colnames(profiles.nrm)
   variable.names <- variable.names[which(!str_detect(variable.names, "Metadata_"))]
 
   # in some special cases of mean profiles (e.g. CDRP), there seems to be Inf, and NA value.
@@ -40,7 +62,7 @@ read.and.summarize <- function(profile.type, path, feat.list, metadata.df) {
       ids <- apply(profiles.nrm[,variable.names], 2, function(x) !any(is.na(x) | is.nan(x) | is.infinite(x) | sd(x) > 10)) %>% which
       variable.names <- variable.names[ids]
     } else {
-      variable.names <- feat.list
+      variable.names <- feat.list.s
     }
     
     profiles.nrm <- profiles.nrm %>% select(one_of(c(meta.cols, variable.names)))
@@ -115,6 +137,9 @@ Pf.2.mean <- read.and.summarize("mean", "../../repurp_2nd_moment", feat.list, me
 Pf.1.cov <- read.and.summarize("cov", "../../CDRP_2nd_moment", feat.list, metadata.cdrp)
 Pf.2.cov <- read.and.summarize("cov", "../../repurp_2nd_moment", feat.list, metadata.repurp)
 
+Pf.1.median.mad <- read.and.summarize("median+mad", "../../CDRP_2nd_moment", feat.list, metadata.cdrp)
+Pf.2.median.mad <- read.and.summarize("median+mad", "../../repurp_2nd_moment", feat.list, metadata.repurp)
+
 Pf.1.mean$data %<>% 
   mutate(Metadata_Treatment = str_sub(Metadata_broad_sample, 1, 13))
 
@@ -127,6 +152,12 @@ Pf.1.cov$data %<>%
 Pf.2.cov$data %<>% 
   mutate(Metadata_Treatment = str_sub(Metadata_broad_sample, 1, 13))
 
+Pf.1.median.mad$data %<>% 
+  mutate(Metadata_Treatment = str_sub(Metadata_broad_sample, 1, 13))
+
+Pf.2.median.mad$data %<>% 
+  mutate(Metadata_Treatment = str_sub(Metadata_broad_sample, 1, 13))
+
 compute.corr <- function(Pf.1, Pf.2) {
   cr <- cor(Pf.1$data[, Pf.1$feats] %>% t, Pf.2$data[, Pf.2$feats] %>% t)
   rownames(cr) <- Pf.1$data$Metadata_Treatment
@@ -135,12 +166,58 @@ compute.corr <- function(Pf.1, Pf.2) {
   return(cr)
 }
 
+
+v1 <- Pf.1.mean$data %>%
+  select(Metadata_Treatment) %>%
+  unique %>%
+  as.matrix() %>%
+  as.vector()
+v2 <- Pf.1.cov$data %>%
+  select(Metadata_Treatment) %>%
+  unique %>%
+  as.matrix() %>%
+  as.vector()
+v3 <- Pf.1.median.mad$data %>%
+  select(Metadata_Treatment) %>%
+  unique %>%
+  as.matrix() %>%
+  as.vector()
+
+v <- intersect(intersect(v1, v2), v3)
+
+w1 <- Pf.2.mean$data %>%
+  select(Metadata_Treatment) %>%
+  unique %>%
+  as.matrix() %>%
+  as.vector()
+w2 <- Pf.2.cov$data %>%
+  select(Metadata_Treatment) %>%
+  unique %>%
+  as.matrix() %>%
+  as.vector()
+w3 <- Pf.2.median.mad$data %>%
+  select(Metadata_Treatment) %>%
+  unique %>%
+  as.matrix() %>%
+  as.vector()
+
+w <- intersect(intersect(w1, w2), w3)
+
+Pf.1.mean$data %<>% filter(Metadata_Treatment %in% v)
+Pf.1.cov$data %<>% filter(Metadata_Treatment %in% v)
+Pf.1.median.mad$data %<>% filter(Metadata_Treatment %in% v)
+
+Pf.2.mean$data %<>% filter(Metadata_Treatment %in% w)
+Pf.2.cov$data %<>% filter(Metadata_Treatment %in% w)
+Pf.2.median.mad$data %<>% filter(Metadata_Treatment %in% w)
+
 cr.1.mean <- compute.corr(Pf.1.mean, Pf.1.mean)
 cr.1.cov <- compute.corr(Pf.1.cov, Pf.1.cov)
 
 cr.2.mean <- compute.corr(Pf.2.mean, Pf.2.mean)
 cr.2.cov <- compute.corr(Pf.2.cov, Pf.2.cov)
 
+cr.1.2.median.mad <- compute.corr(Pf.1.median.mad, Pf.2.median.mad)
 cr.1.2.mean <- compute.corr(Pf.1.mean, Pf.2.mean)
 cr.1.2.cov <- compute.corr(Pf.1.cov, Pf.2.cov)
 
@@ -185,16 +262,21 @@ rng <- 1:30
 cr.1 <- cr.mean[1:NROW(Pf.1.mean$data), (NROW(Pf.1.mean$data) + 1):NCOL(cr.mean)]
 cr.2 <- cr.cov[1:NROW(Pf.1.mean$data), (NROW(Pf.1.mean$data) + 1):NCOL(cr.cov)]
 cr.3 <- cr.mix[1:NROW(Pf.1.mean$data), (NROW(Pf.1.mean$data) + 1):NCOL(cr.mix)]
+cr.4 <- cr.1.2.median.mad
 
 v1 <- match.brds(cr.mean[1:NROW(Pf.1.mean$data), (NROW(Pf.1.mean$data) + 1):NCOL(cr.mean)], rng) %>% unlist
 v2 <- match.brds(cr.3, rng) %>% unlist
+v3 <- match.brds(cr.4, rng) %>% unlist
 
 D1 <- data.frame(method = "mean", k = rng, y = v1)
 D2 <- data.frame(method = "mean+cov.", k = rng, y = v2)
+D3 <- data.frame(method = "median+mad", k = rng, y = v3)
 
 D <- rbind(D1, D2)
+D <- rbind(D, D3)
+D <- D %>% mutate(method = factor(method, levels = sort(unique(as.character(D$method)))))
 
-g <- ggplot2::ggplot(D, aes(x = k, y = y, color = method)) + geom_line() + geom_point() + ylab("how many compounds find themselves \n within their kNN in the other batch")
+g <- ggplot2::ggplot(D, aes(x = k, y = y, color = method, order = method)) + geom_line() + geom_point() + ylab("how many compounds find themselves \n within their kNN in the other batch")
 g
 
 metadata.repurp <- Pf.2.cov$data %>%
@@ -205,16 +287,22 @@ metadata.repurp <- Pf.2.cov$data %>%
 top.precs <- seq(from = 0.98, to = 0.999, by = 0.002)
 a1 <- lapply(top.precs, function(x) enrichment_top_conn_cross(sm = cr.1, metadata1 = metadata.cdrp, metadata2 = metadata.repurp, top.perc = x)$test$estimate) %>% unlist
 a3 <- lapply(top.precs, function(x) enrichment_top_conn_cross(sm = cr.3, metadata1 = metadata.cdrp, metadata2 = metadata.repurp, top.perc = x)$test$estimate) %>% unlist
+a4 <- lapply(top.precs, function(x) enrichment_top_conn_cross(sm = cr.4, metadata1 = metadata.cdrp, metadata2 = metadata.repurp, top.perc = x)$test$estimate) %>% unlist
+
 
 D1 <- data.frame(p = top.precs, folds = a1, method = "mean")
 D2 <- data.frame(p = top.precs, folds = a3, method = "mean+cov.")
+D3 <- data.frame(p = top.precs, folds = a4, method = "median+mad")
 D <- rbind(D1, D2)
+D <- rbind(D, D3)
+D <- D %>% mutate(method = factor(method, levels = sort(unique(as.character(D$method)))))
+D <- D %>% mutate(p = 1 - p)
 
 g <- ggplot(D, aes(x = p * 100, y = folds, color = method)) + 
   geom_point() + 
   geom_line() + 
   scale_y_continuous(limits = c(0, NA)) + 
-  scale_x_continuous(breaks = top.precs[seq(from = 1, to = length(top.precs), by = 2)] * 100, minor_breaks = top.precs * 100) +
+  scale_x_continuous(breaks = 100 - rev(top.precs[seq(from = 1, to = length(top.precs), by = 2)] * 100), minor_breaks = 100 - rev(top.precs * 100)) +
   ylab("No. of folds of enrichment \n for top p% conn. to have same MOA") + 
   xlab("p")
 print(g) 
