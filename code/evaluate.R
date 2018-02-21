@@ -117,7 +117,7 @@ read.and.summarize <- function(profile.type) {
   }
   
   prf <- profiles.nrm %>% 
-    group_by(Metadata_broad_sample, Metadata_mmoles_per_liter) %>%
+    group_by(Metadata_broad_sample, Metadata_mmoles_per_liter, Metadata_Plate_Map_Name) %>%
     summarise_at(.vars = variable.names, .funs = "mean")
   
   prf %<>%
@@ -217,6 +217,9 @@ if (profile.type != "mix") {
     profiles.meta <- profiles.nrm %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
   }
 
+  pm <- profiles.nrm %>% select(Metadata_broad_sample, Metadata_Plate_Map_Name) %>% unique 
+  profiles.meta <- profiles.meta %>% left_join(pm, by = "Metadata_broad_sample")
+  
   cr <- cor(profiles.nrm[, feats] %>% t)
   rownames(cr) <- profiles.nrm$Metadata_broad_sample
   colnames(cr) <- profiles.nrm$Metadata_broad_sample
@@ -248,6 +251,8 @@ if (profile.type != "mix") {
   } else {
     profiles.meta <- profiles.nrm.1 %>% select("Metadata_broad_sample", "Metadata_moa") %>% unique
   }
+  pm <- profiles.nrm.1 %>% select(Metadata_broad_sample, Metadata_Plate_Map_Name) %>% unique 
+  profiles.meta <- pm %>% left_join(profiles.meta, by = "Metadata_broad_sample")
   
   cr.1 <- cor(profiles.nrm.1[, feats.1] %>% t)
   rownames(cr.1) <- profiles.nrm.1$Metadata_broad_sample

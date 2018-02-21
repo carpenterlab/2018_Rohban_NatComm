@@ -8,6 +8,7 @@ source("moa_evaluations.R")
 enrichment.based.classification <- FALSE
 k.snf <- 7     # neighborhood size in SNF
 k <- 1:10      # k top hits are used for classification
+not.same.batch <- T
 
 cr.melt.mean <- readRDS("cr_mean.rds")
 cr.melt.cov <- readRDS("cr_cov.rds")
@@ -54,10 +55,10 @@ colnames(af.snf) <- colnames(af.1)
 cr.mix <- af.snf
 
 metadata <- cr.melt.mean %>%
-  select(Var1, Metadata_moa.x) %>%
+  select(Var1, Metadata_moa.x, Metadata_Plate_Map_Name.x) %>%
   unique() %>%
-  mutate(Metadata_broad_sample = Var1, Metadata_moa = Metadata_moa.x) %>%
-  select(-Var1, -Metadata_moa.x)
+  mutate(Metadata_broad_sample = Var1, Metadata_moa = Metadata_moa.x, Metadata_Plate_Map_Name = Metadata_Plate_Map_Name.x) %>%
+  select(-Var1, -Metadata_moa.x, -Metadata_Plate_Map_Name.x)
 
 cmpd_classification <- Vectorize(cmpd_classification, "k0")
 cmpd_knn_classification <- Vectorize(cmpd_knn_classification, "k0")
@@ -120,9 +121,9 @@ if (enrichment.based.classification) {
     ggsave("classification_comparison.png", g, width = 7, height = 5)
   }
 } else {
-  d.mean <- cmpd_knn_classification(cr.mean, metadata, k) 
-  d.mix <- cmpd_knn_classification(cr.mix, metadata, k) 
-  d.median.mad <- cmpd_knn_classification(cr.median.mad, metadata, k) 
+  d.mean <- cmpd_knn_classification(cr.mean, metadata, k, not.same.batch = not.same.batch) 
+  d.mix <- cmpd_knn_classification(cr.mix, metadata, k, not.same.batch = not.same.batch) 
+  d.median.mad <- cmpd_knn_classification(cr.median.mad, metadata, k, not.same.batch = not.same.batch) 
   
   if (length(k) == 1) {
     d.mean %>% NROW %>% print
@@ -172,9 +173,9 @@ if (enrichment.based.classification) {
 
 top.prec <- seq(from = 0.98, to = 0.999, by = 0.002)
 enrichment_top_conn <- Vectorize(enrichment_top_conn, vectorize.args = "top.perc")
-mean.res <- enrichment_top_conn(sm = cr.mean, metadata = metadata, top.perc = top.prec)
-mix.res <- enrichment_top_conn(sm = cr.mix, metadata = metadata, top.perc = top.prec)
-median.mad.res <- enrichment_top_conn(sm = cr.median.mad, metadata = metadata, top.perc = top.prec)
+mean.res <- enrichment_top_conn(sm = cr.mean, metadata = metadata, top.perc = top.prec, not.same.batch = not.same.batch)
+mix.res <- enrichment_top_conn(sm = cr.mix, metadata = metadata, top.perc = top.prec, not.same.batch = not.same.batch)
+median.mad.res <- enrichment_top_conn(sm = cr.median.mad, metadata = metadata, top.perc = top.prec, not.same.batch = not.same.batch)
 
 mean.res <- mean.res["estimate",] %>% unlist %>% unname()
 mix.res <- mix.res["estimate",] %>% unlist %>% unname()
