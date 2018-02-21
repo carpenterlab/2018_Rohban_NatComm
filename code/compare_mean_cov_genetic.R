@@ -182,7 +182,7 @@ if (enrichment.based.classification) {
       geom_line() + 
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = k, minor_breaks = k) +
-      ylab("No. of genes with a \n same Pathway gene in their k-NNs")
+      ylab("No. of genes with at least k/2 \n same Pathway gene in their k-NNs")
     print(g) 
     ggsave("classification_comparison.png", g, width = 7, height = 5)
   }

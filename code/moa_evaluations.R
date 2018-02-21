@@ -261,8 +261,8 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5) {
     sm %>% 
       arrange(-value) %>% 
       group_by(Var1, Metadata_moa.x) %>% 
-      slice(1:(1+k0)) %>% 
-      summarise(pass = any(same.moa(Metadata_moa.x, Metadata_moa.y))) %>% 
+      slice(1:k0) %>% 
+      summarise(pass = ifelse(sum(same.moa(Metadata_moa.x, Metadata_moa.y)) >= ceiling(k0/2), T, F)) %>% 
       filter(pass) 
   )
 }
