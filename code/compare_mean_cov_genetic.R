@@ -182,7 +182,7 @@ if (enrichment.based.classification) {
       geom_line() + 
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = k, minor_breaks = k) +
-      ylab("No. of genes with a \n same Pathway gene in their k-NNs")
+      ylab("No. of genes with at least k/2 \n same Pathway gene in their k-NNs")
     print(g) 
     ggsave("classification_comparison.png", g, width = 7, height = 5)
   }
@@ -206,13 +206,13 @@ D3 <- data.frame(top.prec = top.prec * 100, odds.ratio = mix.res, method = "mean
 D <- rbind(D1, D2)
 D <- rbind(D, D3)
 D <- D %>% mutate(method = factor(method, levels = sort(unique(as.character(D$method)))))
-
+D <- D %>% mutate(top.prec = 100 - top.prec)
 
 g <- ggplot(D, aes(x = top.prec, y = odds.ratio, color = method, order = method)) + 
   geom_point() + 
   geom_line() + 
   scale_y_continuous(limits = c(0, NA)) +
-  scale_x_continuous(breaks = top.prec[seq(from = 1, to = length(top.prec), by = 2)] * 100, minor_breaks = top.prec * 100) +
+  scale_x_continuous(breaks = 100 - rev(top.prec[seq(from = 1, to = length(top.prec), by = 2)] * 100), minor_breaks = 100 - rev(top.prec * 100)) +
   ylab("No. of folds of enrichment \n for top p% conn. to have same Pathway") + 
   xlab("p")
 print(g) 

@@ -22,7 +22,7 @@ same.moa <- function(moa.list.1, moa.list.2) {
 
 same.moa <- Vectorize(same.moa)
 
-enrichment_top_conn <- function(sm, metadata, top.perc = 0.95) {
+enrichment_top_conn <- function(sm, metadata, top.perc = 0.95, not.same.batch = F) {
   sm <- sm %>% 
     reshape2::melt() %>% 
     filter(as.character(Var1) < as.character(Var2) & 
@@ -36,6 +36,13 @@ enrichment_top_conn <- function(sm, metadata, top.perc = 0.95) {
               by = c("Var2" = "Metadata_broad_sample")) %>%
     filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y)) %>%
     mutate(same.moa = same.moa(Metadata_moa.x, Metadata_moa.y))
+  
+  if (not.same.batch) {
+    sm <- sm %>%
+      filter((is.na(Metadata_Plate_Map_Name.x) & !is.na(Metadata_Plate_Map_Name.y))
+             | (is.na(Metadata_Plate_Map_Name.y) & !is.na(Metadata_Plate_Map_Name.x))
+             | (Metadata_Plate_Map_Name.x != Metadata_Plate_Map_Name.y))
+  }
   
   thr <- quantile(sm$value, top.perc, na.rm = T)
   
@@ -243,7 +250,7 @@ signif.test <- function(x, k0) {
     slice(1) 
 }
 
-cmpd_knn_classification <- function(sm, metadata, k0 = 5) {
+cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
   sm <- sm %>% 
     reshape2::melt() %>% 
     filter(Var1 != Var2 &
@@ -257,12 +264,19 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5) {
               by = c("Var2" = "Metadata_broad_sample")) %>%
     filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y))
   
+  if (not.same.batch) {
+    sm <- sm %>%
+      filter((is.na(Metadata_Plate_Map_Name.x) & !is.na(Metadata_Plate_Map_Name.y))
+             | (is.na(Metadata_Plate_Map_Name.y) & !is.na(Metadata_Plate_Map_Name.x))
+             | (Metadata_Plate_Map_Name.x != Metadata_Plate_Map_Name.y))
+  }
+  
   return(
     sm %>% 
       arrange(-value) %>% 
       group_by(Var1, Metadata_moa.x) %>% 
-      slice(1:(1+k0)) %>% 
-      summarise(pass = any(same.moa(Metadata_moa.x, Metadata_moa.y))) %>% 
+      slice(1:k0) %>% 
+      summarise(pass = ifelse(sum(same.moa(str_to_lower(Metadata_moa.x), str_to_lower(Metadata_moa.y))) >= 1, T, F)) %>% 
       filter(pass) 
   )
 }
