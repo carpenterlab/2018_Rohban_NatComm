@@ -34,6 +34,8 @@ if (!is.null(feat.list)) {
   feat.list <- unname(unlist(feat.list))
 }
 
+mean.na <- function(x) {mean(x, na.rm = T)}
+
 plate.list <- readr::read_csv(plates, col_names = F) %>% as.matrix() %>% as.vector()
 
 if (!is.null(meta.file)) {
@@ -118,7 +120,7 @@ read.and.summarize <- function(profile.type) {
   
   prf <- profiles.nrm %>% 
     group_by(Metadata_broad_sample, Metadata_mmoles_per_liter, Metadata_Plate_Map_Name) %>%
-    summarise_at(.vars = variable.names, .funs = "mean")
+    summarise_at(.vars = variable.names, .funs = "mean.na")
   
   prf %<>%
     arrange(abs(Metadata_mmoles_per_liter - 10)) %>%
