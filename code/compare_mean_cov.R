@@ -10,7 +10,7 @@ k.snf <- 7     # neighborhood size in SNF
 k <- 1:10      # k top hits are used for classification
 not.same.batch <- T
 
-cr.melt.mean <- readRDS("cr_mean.rds")
+cr.melt.mean <- readRDS("cr_median.rds")
 cr.melt.cov <- readRDS("cr_cov.rds")
 cr.melt.median.mad <- readRDS("cr_median+mad.rds")
 
@@ -153,9 +153,9 @@ if (enrichment.based.classification) {
     l.mix <- lapply(d.mix[3, ], function(x) sum(x))
     l.median.mad <- lapply(d.median.mad[3, ], function(x) sum(x)) 
     
-    D <- data.frame(method = "mean", k = k, tp = (unlist(l.mean)))
+    D <- data.frame(method = "median", k = k, tp = (unlist(l.mean)))
     D <- rbind(D, 
-               data.frame(method = "mean+cov.", k = k, tp = (unlist(l.mix))))
+               data.frame(method = "median+cov.", k = k, tp = (unlist(l.mix))))
     D <- rbind(D, 
                data.frame(method = "median+mad", k = k, tp = (unlist(l.median.mad))))
     D <- D %>% mutate(method = factor(method, levels = sort(unique(as.character(D$method)))))
@@ -181,9 +181,9 @@ mean.res <- mean.res["estimate",] %>% unlist %>% unname()
 mix.res <- mix.res["estimate",] %>% unlist %>% unname()
 median.mad.res <- median.mad.res["estimate",] %>% unlist %>% unname()
 
-D1 <- data.frame(top.prec = top.prec * 100, odds.ratio = mean.res, method = "mean")
+D1 <- data.frame(top.prec = top.prec * 100, odds.ratio = mean.res, method = "median")
 D2 <- data.frame(top.prec = top.prec * 100, odds.ratio = median.mad.res, method = "median+mad")
-D3 <- data.frame(top.prec = top.prec * 100, odds.ratio = mix.res, method = "mean+cov.")
+D3 <- data.frame(top.prec = top.prec * 100, odds.ratio = mix.res, method = "median+cov.")
 
 D <- rbind(D1, D2)
 D <- rbind(D, D3)
