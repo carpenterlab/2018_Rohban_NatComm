@@ -297,14 +297,14 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
               by = c("Var2" = "Metadata_broad_sample")) %>%
     filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "")
   
-  thr <- quantile(sm$value, 0.99, na.rm = T)
-  
   if (not.same.batch) {
     sm <- sm %>%
       filter((is.na(Metadata_Plate_Map_Name.x) & !is.na(Metadata_Plate_Map_Name.y))
              | (is.na(Metadata_Plate_Map_Name.y) & !is.na(Metadata_Plate_Map_Name.x))
              | (Metadata_Plate_Map_Name.x != Metadata_Plate_Map_Name.y))
   }
+  
+  thr <- quantile(sm$value, 0.99, na.rm = T)
   
   return(
     sm %>% 
