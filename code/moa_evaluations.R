@@ -34,7 +34,7 @@ enrichment_top_conn <- function(sm, metadata, top.perc = 0.95, not.same.batch = 
     left_join(., 
               metadata, 
               by = c("Var2" = "Metadata_broad_sample")) %>%
-    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y)) %>%
+    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "") %>%
     mutate(same.moa = same.moa(Metadata_moa.x, Metadata_moa.y))
   
   if (not.same.batch) {
@@ -77,7 +77,7 @@ enrichment_top_conn_cross <- function(sm, metadata1, metadata2, top.perc = 0.95)
     left_join(., 
               metadata2, 
               by = c("Var2" = "Metadata_broad_sample")) %>%
-    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y)) %>%
+    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "") %>%
     mutate(same.moa = same.moa(str_to_lower(Metadata_moa.x), str_to_lower(Metadata_moa.y)))
   
   thr <- quantile(sm$value, top.perc, na.rm = T)
@@ -250,6 +250,36 @@ signif.test <- function(x, k0) {
     slice(1) 
 }
 
+cmpd_classification_curve <- function(sm, metadata, k0 = 5, not.same.batch = F) {
+  sm <- sm %>% 
+    reshape2::melt() %>% 
+    filter(Var1 != Var2 &
+             Var1 != "DMSO" &
+             Var2 != "DMSO") %>%
+    left_join(., 
+              metadata, 
+              by = c("Var1" = "Metadata_broad_sample")) %>%
+    left_join(., 
+              metadata, 
+              by = c("Var2" = "Metadata_broad_sample")) %>%
+    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "")
+
+  if (not.same.batch) {
+    sm <- sm %>%
+      filter((is.na(Metadata_Plate_Map_Name.x) & !is.na(Metadata_Plate_Map_Name.y))
+             | (is.na(Metadata_Plate_Map_Name.y) & !is.na(Metadata_Plate_Map_Name.x))
+             | (Metadata_Plate_Map_Name.x != Metadata_Plate_Map_Name.y))
+  }
+  
+  return(
+    sm %>% 
+      arrange(-value) %>% 
+      group_by(Var1, Metadata_moa.x) %>% 
+      slice(1:k0) %>% 
+      summarise(num.same.moa.conn = sum(same.moa(str_to_lower(Metadata_moa.x), str_to_lower(Metadata_moa.y))))
+  )
+}
+
 cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
   sm <- sm %>% 
     reshape2::melt() %>% 
@@ -262,7 +292,7 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
     left_join(., 
               metadata, 
               by = c("Var2" = "Metadata_broad_sample")) %>%
-    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y))
+    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "")
   
   if (not.same.batch) {
     sm <- sm %>%
