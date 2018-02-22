@@ -75,8 +75,14 @@ read.and.summarize <- function(profile.type) {
       init <- list.dirs("../backend", recursive = F)
       fl.name <- paste0(init, "/", pl, "/", pl, "_normalized_median_mad.csv")
       
-      x <- readr::read_csv(fl.name)  
-      if (!is.null(feat.list)) {
+      if (file.exists(fl.name)) {
+        x <- readr::read_csv(fl.name)    
+      } else {
+        x <- NULL
+        warning(paste0("Plate ", pl, " is missing."))
+      }
+      
+      if (!is.null(feat.list) & ! is.null(x)) {
         x <- x %>%
           select(matches("Metadata_"), one_of(paste0(feat.list, "_median")))
         feat.list.s <- paste0(feat.list, "_median")
