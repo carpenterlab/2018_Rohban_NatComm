@@ -199,17 +199,3 @@ g <- ggplot(D, aes(x = top.prec, y = odds.ratio, color = method, order = method)
   xlab("p")
 print(g) 
 ggsave("global_comparison.png", g, width = 7, height = 5)
-
-
-cv.mean <- cmpd_classification_curve(cr.mean, metadata = metadata, k0 = 5, not.same.batch = F)
-cv.median.mad <- cmpd_classification_curve(cr.median.mad, metadata = metadata, k0 = 5, not.same.batch = F)
-cv.mix <- cmpd_classification_curve(cr.mix, metadata = metadata, k0 = 5, not.same.batch = F)
-
-D <- rbind(cv.mean %>% mutate(method = "median"), cv.median.mad %>% mutate(method = "median+mad"))
-D <- rbind(D, cv.mix %>% mutate(method = "median+cov."))
-
-ord.var <- cv.mix %>% arrange(-num.same.moa.conn) %>% select(Var1) %>% as.matrix() %>% as.vector() %>% unique
-D <- D %>% ungroup() %>% mutate(Var1 = factor(Var1, levels = ord.var)) %>% mutate(ord = (rank(Var1) - 2)/3 + 1)
-
-g <- ggplot(D, aes(x = num.same.moa.conn, fill = method, group = method)) + geom_histogram()
-g
