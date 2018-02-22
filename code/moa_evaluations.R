@@ -263,6 +263,8 @@ cmpd_classification_curve <- function(sm, metadata, k0 = 5, not.same.batch = F) 
               metadata, 
               by = c("Var2" = "Metadata_broad_sample")) %>%
     filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "")
+  
+  thr <- quantile(sm$value, 0.99, na.rm = T)
 
   if (not.same.batch) {
     sm <- sm %>%
@@ -276,6 +278,7 @@ cmpd_classification_curve <- function(sm, metadata, k0 = 5, not.same.batch = F) 
       arrange(-value) %>% 
       group_by(Var1, Metadata_moa.x) %>% 
       slice(1:k0) %>% 
+      filter(value > thr) %>%
       summarise(num.same.moa.conn = sum(same.moa(str_to_lower(Metadata_moa.x), str_to_lower(Metadata_moa.y))))
   )
 }
@@ -294,6 +297,8 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
               by = c("Var2" = "Metadata_broad_sample")) %>%
     filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "")
   
+  thr <- quantile(sm$value, 0.99, na.rm = T)
+  
   if (not.same.batch) {
     sm <- sm %>%
       filter((is.na(Metadata_Plate_Map_Name.x) & !is.na(Metadata_Plate_Map_Name.y))
@@ -306,6 +311,7 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
       arrange(-value) %>% 
       group_by(Var1, Metadata_moa.x) %>% 
       slice(1:k0) %>% 
+      filter(value > thr) %>%
       summarise(pass = ifelse(sum(same.moa(str_to_lower(Metadata_moa.x), str_to_lower(Metadata_moa.y))) >= 1, T, F)) %>% 
       filter(pass) 
   )
