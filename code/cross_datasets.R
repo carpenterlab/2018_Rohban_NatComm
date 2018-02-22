@@ -8,6 +8,8 @@ library(magrittr)
 library(ggplot2)
 source("moa_evaluations.R")
 
+mean.na <- function(x) {mean(x, na.rm = T)}
+
 k.snf <- 7
 feat.list <- readr::read_csv("../input/feature_list.txt", col_names = F)
 feat.list <- feat.list %>% unlist() %>% unname()
@@ -26,6 +28,22 @@ read.and.summarize <- function(profile.type, path, feat.list, metadata.df) {
       pl <- str_split(fl, "_")[[1]][1]
       x <- readr::read_csv(paste0(path, "/input/", pl, "_normalized.csv"))  
       x <- x %>% select(matches("Metadata_"), one_of(feat.list))
+    } else if (profile.type == "median") {
+      pl <- str_split(fl, "_")[[1]][1]
+      init <- list.dirs(paste0(path, "/backend"), recursive = F)
+      fl.name <- paste0(init, "/", pl, "/", pl, "_normalized_median_mad.csv")
+      
+      if (file.exists(fl.name)) {
+        x <- readr::read_csv(fl.name)    
+        if (!is.null(feat.list)) {
+          x <- x %>%
+            select(matches("Metadata_"), one_of(paste0(feat.list, "_median")))
+          feat.list.s <- paste0(feat.list, "_median")
+        }
+      } else {
+        x <- NULL
+        warning(paste0("Plate ", pl, " is missing."))
+      }
     } else if (str_detect(profile.type, "\\+")) {
       p1 <- str_split(profile.type, "\\+")[[1]][1]  
       p2 <- str_split(profile.type, "\\+")[[1]][2]  
@@ -77,7 +95,7 @@ read.and.summarize <- function(profile.type, path, feat.list, metadata.df) {
   
   prf <- profiles.nrm %>% 
     group_by(Metadata_broad_sample, Metadata_mmoles_per_liter) %>%
-    summarise_at(.vars = variable.names, .funs = "mean")
+    summarise_at(.vars = variable.names, .funs = "mean.na")
   
   prf %<>%
     arrange(abs(Metadata_mmoles_per_liter - 10)) %>%
@@ -131,8 +149,8 @@ match.brds <- function(cr, k) {
   return(ps/tot)
 }
 
-Pf.1.mean <- read.and.summarize("mean", "../../CDRP_2nd_moment", feat.list, metadata.cdrp)
-Pf.2.mean <- read.and.summarize("mean", "../../repurp_2nd_moment", feat.list, metadata.repurp)
+Pf.1.mean <- read.and.summarize("median", "../../CDRP_2nd_moment", feat.list, metadata.cdrp)
+Pf.2.mean <- read.and.summarize("median", "../../repurp_2nd_moment", feat.list, metadata.repurp)
 
 Pf.1.cov <- read.and.summarize("cov", "../../CDRP_2nd_moment", feat.list, metadata.cdrp)
 Pf.2.cov <- read.and.summarize("cov", "../../repurp_2nd_moment", feat.list, metadata.repurp)
