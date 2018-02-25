@@ -10,7 +10,7 @@ source("moa_evaluations.R")
 
 mean.na <- function(x) {mean(x, na.rm = T)}
 
-k.snf <- 7
+k.snf <- 15
 feat.list <- readr::read_csv("../input/feature_list.txt", col_names = F)
 feat.list <- feat.list %>% unlist() %>% unname()
 
@@ -263,8 +263,8 @@ colnames(m22) <- colnames(cr.1.2.cov)
 
 c2 <- rbind(cbind(m11, cr.1.2.cov), cbind(t(cr.1.2.cov), m22))
 
-c1[(is.na(c1) | is.nan(c1) | is.infinite(c1))] <- -2
-c2[(is.na(c2) | is.nan(c2) | is.infinite(c2))] <- -2
+c1[(is.na(c1) | is.nan(c1) | is.infinite(c1))] <- -5
+c2[(is.na(c2) | is.nan(c2) | is.infinite(c2))] <- -5
 
 af.1 <- SNFtool::affinityMatrix(Diff = 1 - c1, K = k.snf, sigma = 0.5)
 af.2 <- SNFtool::affinityMatrix(Diff = 1 - c2, K = k.snf, sigma = 0.5)
@@ -308,8 +308,8 @@ a3 <- lapply(top.precs, function(x) enrichment_top_conn_cross(sm = cr.3, metadat
 a4 <- lapply(top.precs, function(x) enrichment_top_conn_cross(sm = cr.4, metadata1 = metadata.cdrp, metadata2 = metadata.repurp, top.perc = x)$test$estimate) %>% unlist
 
 
-D1 <- data.frame(p = top.precs, folds = a1, method = "mean")
-D2 <- data.frame(p = top.precs, folds = a3, method = "mean+cov.")
+D1 <- data.frame(p = top.precs, folds = a1, method = "median")
+D2 <- data.frame(p = top.precs, folds = a3, method = "median+cov.")
 D3 <- data.frame(p = top.precs, folds = a4, method = "median+mad")
 D <- rbind(D1, D2)
 D <- rbind(D, D3)
