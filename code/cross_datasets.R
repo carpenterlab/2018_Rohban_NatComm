@@ -263,8 +263,8 @@ colnames(m22) <- colnames(cr.1.2.cov)
 
 c2 <- rbind(cbind(m11, cr.1.2.cov), cbind(t(cr.1.2.cov), m22))
 
-c1[(is.na(c1) | is.nan(c1) | is.infinite(c1))] <- -5
-c2[(is.na(c2) | is.nan(c2) | is.infinite(c2))] <- -5
+c1[(is.na(c1) | is.nan(c1) | is.infinite(c1))] <- -2
+c2[(is.na(c2) | is.nan(c2) | is.infinite(c2))] <- -2
 
 af.1 <- SNFtool::affinityMatrix(Diff = 1 - c1, K = k.snf, sigma = 0.5)
 af.2 <- SNFtool::affinityMatrix(Diff = 1 - c2, K = k.snf, sigma = 0.5)

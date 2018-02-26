@@ -1,4 +1,3 @@
-rm(list = ls())
 
 library(dplyr)
 library(ggplot2)
@@ -8,10 +7,15 @@ source("moa_evaluations.R")
 enrichment.based.classification <- FALSE
 k.snf <- 7     # neighborhood size in SNF
 k <- 1:10      # k top hits are used for classification
+snf.med.mad <- T
 
 cr.melt.mean <- readRDS("cr_median.rds")
 cr.melt.cov <- readRDS("cr_cov.rds")
-cr.melt.median.mad <- readRDS("cr_median+mad.rds")
+if (snf.med.mad) {
+  cr.melt.mad <- readRDS("cr_mad.rds")  
+} else {
+  cr.melt.median.mad <- readRDS("cr_median+mad.rds") 
+}
 
 cr.mean <- cr.melt.mean %>%
   select(Var1, Var2, value) %>%
@@ -19,11 +23,19 @@ cr.mean <- cr.melt.mean %>%
   summarise(value = max(value)) %>%
   reshape2::acast("Var1 ~ Var2") 
 
-cr.median.mad <- cr.melt.median.mad %>%
-  select(Var1, Var2, value) %>%
-  group_by(Var1, Var2) %>%
-  summarise(value = max(value)) %>%
-  reshape2::acast("Var1 ~ Var2") 
+if (!snf.med.mad) {
+  cr.median.mad <- cr.melt.median.mad %>%
+    select(Var1, Var2, value) %>%
+    group_by(Var1, Var2) %>%
+    summarise(value = max(value)) %>%
+    reshape2::acast("Var1 ~ Var2") 
+} else {
+  cr.mad <- cr.melt.mad %>%
+    select(Var1, Var2, value) %>%
+    group_by(Var1, Var2) %>%
+    summarise(value = max(value)) %>%
+    reshape2::acast("Var1 ~ Var2") 
+}
 
 cr.cov <- cr.melt.cov %>%
   select(Var1, Var2, value) %>%
@@ -31,38 +43,43 @@ cr.cov <- cr.melt.cov %>%
   summarise(value = max(value)) %>%
   reshape2::acast("Var1 ~ Var2")
 
-metad <- readr::read_csv("../input/metadata_TA_2.csv")
-gene.s <- function(x) {
-  str_split(x, "_")[[1]][1]
-}
-allele.s <- function(x) {
-  str_split(x, "_")[[1]][2]
-}
-gene.s <- Vectorize(gene.s)
-allele.s <- Vectorize(allele.s)
-
-subs <- metad %>%
-  mutate(gene = gene.s(Metadata_Treatment),
-         allele = allele.s(Metadata_Treatment))  %>%
-  filter(str_detect(allele, "WT")) %>%
-  group_by(gene) %>%
-  slice(1) %>%
-  ungroup() %>%
-  select(Metadata_broad_sample) %>%
-  as.matrix() %>%
-  as.vector()
-
-cr.mean <- cr.mean[subs, subs]
 d <- apply(cr.mean, 1, function(x) !(sum(is.na(x)) >= (NROW(cr.mean) -1 )))
 cr.mean <- cr.mean[d, d]
 
 d <- apply(cr.cov, 1, function(x) !(sum(is.na(x)) >= (NROW(cr.cov) -1 )))
 cr.cov <- cr.cov[d, d]
 
-cm.rn <- setdiff(intersect(rownames(cr.mean), rownames(cr.cov)), NA)
-cr.mean <- cr.mean[cm.rn, cm.rn]
-cr.cov <- cr.cov[cm.rn, cm.rn]
-cr.median.mad <- cr.median.mad[cm.rn, cm.rn]
+if (snf.med.mad) {
+  d <- apply(cr.mad, 1, function(x) !(sum(is.na(x)) >= (NROW(cr.mad) -1 )))
+  cr.mad <- cr.mad[d, d]
+}
+
+if (!snf.med.mad) {
+  cm.rn <- setdiff(intersect(intersect(rownames(cr.median.mad), rownames(cr.mean)), rownames(cr.cov)), NA)
+  cr.mean <- cr.mean[cm.rn, cm.rn]
+  cr.cov <- cr.cov[cm.rn, cm.rn]
+  cr.median.mad <- cr.median.mad[cm.rn, cm.rn]
+  
+  cr.mean[is.na(cr.mean)] <- 0
+  cr.median.mad[is.na(cr.median.mad)] <- 0
+  cr.cov[is.na(cr.cov)] <- 0  
+} else {
+  cm.rn <- setdiff(intersect(intersect(rownames(cr.mad), rownames(cr.mean)), rownames(cr.cov)), NA)
+  cr.mean <- cr.mean[cm.rn, cm.rn]
+  cr.cov <- cr.cov[cm.rn, cm.rn]
+  cr.mad <- cr.mad[cm.rn, cm.rn]
+  
+  cr.mean[is.na(cr.mean)] <- 0
+  cr.mad[is.na(cr.mad)] <- 0
+  cr.cov[is.na(cr.cov)] <- 0
+  
+  af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = 0.5)
+  af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.mad, K = k.snf, sigma = 0.5)
+  af.snf <- SNFtool::SNF(list(af.1, af.2), K = k.snf, t = 10)
+  rownames(af.snf) <- rownames(af.1)
+  colnames(af.snf) <- colnames(af.1)
+  cr.median.mad <- af.snf
+}
 
 af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = 0.5)
 af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.cov, K = k.snf, sigma = 0.5)
@@ -72,10 +89,10 @@ colnames(af.snf) <- colnames(af.1)
 cr.mix <- af.snf
 
 metadata <- cr.melt.mean %>%
-  select(Var1, Metadata_moa.x) %>%
+  select(Var1, Metadata_moa.x, Metadata_Plate_Map_Name.x) %>%
   unique() %>%
-  mutate(Metadata_broad_sample = Var1, Metadata_moa = Metadata_moa.x) %>%
-  select(-Var1, -Metadata_moa.x)
+  mutate(Metadata_broad_sample = Var1, Metadata_moa = Metadata_moa.x, Metadata_Plate_Map_Name = Metadata_Plate_Map_Name.x) %>%
+  select(-Var1, -Metadata_moa.x, -Metadata_Plate_Map_Name.x)
 
 cmpd_classification <- Vectorize(cmpd_classification, "k0")
 cmpd_knn_classification <- Vectorize(cmpd_knn_classification, "k0")
