@@ -22,7 +22,7 @@ same.moa <- function(moa.list.1, moa.list.2) {
 
 same.moa <- Vectorize(same.moa)
 
-enrichment_top_conn <- function(sm, metadata, top.perc = 0.95, not.same.batch = F) {
+perpare_sm <- function(sm, metadata) {
   sm <- sm %>% 
     reshape2::melt() %>% 
     filter(as.character(Var1) < as.character(Var2) & 
@@ -36,7 +36,10 @@ enrichment_top_conn <- function(sm, metadata, top.perc = 0.95, not.same.batch = 
               by = c("Var2" = "Metadata_broad_sample")) %>%
     filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "") %>%
     mutate(same.moa = same.moa(Metadata_moa.x, Metadata_moa.y))
-  
+  return(sm)
+}
+
+enrichment_top_conn <- function(sm, metadata, top.perc = 0.95, not.same.batch = F) {
   if (not.same.batch) {
     sm <- sm %>%
       filter((is.na(Metadata_Plate_Map_Name.x) & !is.na(Metadata_Plate_Map_Name.y))

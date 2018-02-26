@@ -43,6 +43,29 @@ cr.cov <- cr.melt.cov %>%
   summarise(value = max(value)) %>%
   reshape2::acast("Var1 ~ Var2")
 
+metad <- readr::read_csv("../input/metadata_TA_2.csv")
+gene.s <- function(x) {
+  str_split(x, "_")[[1]][1]
+}
+allele.s <- function(x) {
+  str_split(x, "_")[[1]][2]
+}
+gene.s <- Vectorize(gene.s)
+allele.s <- Vectorize(allele.s)
+
+subs <- metad %>%
+  mutate(gene = gene.s(Metadata_Treatment),
+         allele = allele.s(Metadata_Treatment))  %>%
+  filter(str_detect(allele, "WT")) %>%
+  group_by(gene) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(Metadata_broad_sample) %>%
+  as.matrix() %>%
+  as.vector()
+
+cr.mean <- cr.mean[subs, subs]
+
 d <- apply(cr.mean, 1, function(x) !(sum(is.na(x)) >= (NROW(cr.mean) -1 )))
 cr.mean <- cr.mean[d, d]
 
