@@ -219,7 +219,7 @@ if (enrichment.based.classification) {
   }
 }
 
-top.prec <- c(seq(from = 0.99, to = 0.999, by = 0.002), 0.999)
+top.prec <- c(seq(from = 0.98, to = 0.997, by = 0.002))
 enrichment_top_conn <- Vectorize(enrichment_top_conn, vectorize.args = "top.perc")
 sm.mean <- perpare_sm(sm = cr.mean, metadata = metadata)
 sm.mix <- perpare_sm(sm = cr.mix, metadata = metadata)
