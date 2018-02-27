@@ -62,7 +62,11 @@ read.and.summarize <- function(profile.type) {
   
   profiles.nrm <- foreach (fl = fls, .combine = rbind) %do% {
     if (profile.type == "cov") {
-      x <- readr::read_csv(paste0("../output/", fl))  
+      if (file.exists(paste0("../output/", fl))) {
+        x <- readr::read_csv(paste0("../output/", fl))    
+      } else {
+        x <- NULL
+      }
     } else if (profile.type == "mean") {
       pl <- str_split(fl, "_")[[1]][1]
       x <- readr::read_csv(paste0("../input/", pl, "_normalized.csv"))  
