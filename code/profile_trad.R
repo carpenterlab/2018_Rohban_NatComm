@@ -5,7 +5,7 @@ extends <- methods::extends
 
 'profile
 Usage:
-profile_trad -n <project_name> -b <batch_name> -p <plate_number> -o <operation> -f <feat_list_file> -l <norm_column> -v <norm_value> -c <no_cores>
+profile_trad -n <project_name> -b <batch_name> -p <plate_number> -o <operation> -l <norm_column> -v <norm_value> -c <no_cores> [-f <feat_list_file>]
 
 Options:
 -h --help                                         Show this screen.
