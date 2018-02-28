@@ -4,6 +4,20 @@ library(reshape2)
 library(doParallel)
 library(htmlTable)
 
+sim_normalize_rect <- function(sim_mat) {
+  # sim_mat_norm <- apply(sim_mat, 1, function(x) (ecdf(x)(x)))
+  # sim_mat_norm <- (sim_mat_norm + t(sim_mat_norm))/2
+  # rownames(sim_mat_norm) <- rownames(sim_mat)
+  # colnames(sim_mat_norm) <- colnames(sim_mat)
+  # return(sim_mat_norm)
+  sm <- sim_mat[upper.tri(sim_mat)]
+  sim_mat <- (sim_mat - median(sm))/mad(sm)
+  sim_mat <- sim_mat/quantile(sim_mat, 0.999) * 0.999
+  sim_mat[(sim_mat > 1)] <- 1
+  sim_mat[(sim_mat < -1)] <- -1
+  return(sim_mat)
+}
+
 sim_normalize <- function(sim_mat) {
   # sim_mat_norm <- apply(sim_mat, 1, function(x) (ecdf(x)(x)))
   # sim_mat_norm <- (sim_mat_norm + t(sim_mat_norm))/2

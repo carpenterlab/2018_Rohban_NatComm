@@ -1,5 +1,5 @@
-x1 <- (cr.mean)
-x2 <- (cr.cov)
+x1 <- (cr.1.2.mean)
+x2 <- (cr.1.2.mad)
 
 x <- setdiff(x1, 1)
 y <- setdiff(x2, 1)
