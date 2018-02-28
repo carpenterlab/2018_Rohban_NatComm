@@ -22,6 +22,9 @@ sim_normalize <- function(sim_mat) {
 same.moa <- function(moa.list.1, moa.list.2) {
   if (is.na(moa.list.1) || is.na(moa.list.2) || moa.list.1 == "" || moa.list.2 == "") 
     return(FALSE)
+  moa.list.1 <- str_to_lower(moa.list.1)
+  moa.list.2 <- str_to_lower(moa.list.2)
+  
   moas.1 <- str_split(moa.list.1, "\\|")[[1]]
   moas.2 <- str_split(moa.list.2, "\\|")[[1]]
   return(any(moas.1 %in% moas.2) | any(moas.2 %in% moas.1))
