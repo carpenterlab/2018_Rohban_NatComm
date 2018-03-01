@@ -9,8 +9,13 @@ enrichment.based.classification <- FALSE
 k.snf <- 7     # neighborhood size in SNF
 t <- 10
 k <- 1:10      # k top hits are used for classification
+genetic <- T
 not.same.batch <- T
 snf.med.mad <- T
+
+if (genetic) {
+  not.same.batch <- F
+}
 
 cr.melt.mean <- readRDS("cr_median.rds")
 cr.melt.cov <- readRDS("cr_cov.rds")
