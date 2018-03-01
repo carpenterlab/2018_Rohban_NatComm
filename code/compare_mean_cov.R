@@ -78,7 +78,7 @@ colnames(af.snf) <- colnames(af.1)
 cr.median.mad <- af.snf
 
 af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = sigma.mean)
-af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.cov, K = k.snf, sigma = sigma.cov)
+af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = sigma.mean)
 af.snf <- SNFtool::SNF(list(af.1, af.2), K = k.snf, t = t)
 rownames(af.snf) <- rownames(af.1)
 colnames(af.snf) <- colnames(af.1)
@@ -87,7 +87,7 @@ cr.mix <- af.snf
 af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = sigma.mean)
 af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.mad, K = k.snf, sigma = sigma.mad)
 af.3 <- SNFtool::affinityMatrix(Diff = 1 - cr.cov, K = k.snf, sigma = sigma.cov)
-af.snf <- SNFtool::SNF(list(af.1, af.2, af.3), K = k.snf, t = t)
+af.snf <- SNFtool::SNF(list(af.1, af.2, af.3), K = k.snf, t = round(3/2 * t))
 rownames(af.snf) <- rownames(af.1)
 colnames(af.snf) <- colnames(af.1)
 cr.median.mad.cov <- af.snf
@@ -97,6 +97,8 @@ metadata <- cr.melt.mean %>%
   unique() %>%
   mutate(Metadata_broad_sample = Var1, Metadata_moa = Metadata_moa.x, Metadata_Plate_Map_Name = Metadata_Plate_Map_Name.x) %>%
   select(-Var1, -Metadata_moa.x, -Metadata_Plate_Map_Name.x)
+
+metadata <- metadata %>% mutate(Metadata_moa = str_to_lower(Metadata_moa))
 
 cmpd_classification <- Vectorize(cmpd_classification, "k0")
 cmpd_knn_classification <- Vectorize(cmpd_knn_classification, "k0")
@@ -197,7 +199,7 @@ if (enrichment.based.classification) {
     
     D <- data.frame(method = "median", k = k, tp = (unlist(l.mean)))
     D <- rbind(D, 
-               data.frame(method = "median+cov. (SNF)", k = k, tp = (unlist(l.mix))))
+               data.frame(method = "median+median (SNF)", k = k, tp = (unlist(l.mix))))
     D <- rbind(D, 
                data.frame(method = "median+mad (SNF)", k = k, tp = (unlist(l.median.mad))))
     D <- rbind(D, 
@@ -205,7 +207,7 @@ if (enrichment.based.classification) {
     D <- rbind(D, 
                data.frame(method = "median+mad+cov. (SNF)", k = k, tp = (unlist(l.median.mad.cov))))
     
-    lvls <- c("median+mad+cov. (SNF)", "median+mad (SNF)", "median+cov. (SNF)", "median+mad (concatenated)", "median")
+    lvls <- c("median+mad+cov. (SNF)", "median+mad (SNF)", "median+median (SNF)", "median+mad (concatenated)", "median")
     D <- D %>% mutate(method = factor(method, levels = lvls))
     
     g <- ggplot(D, aes(x = k, y = tp, color = method, order = as.character(method))) + 
@@ -242,7 +244,7 @@ median.mad.cov.res <- median.mad.cov.res[3,] %>% unlist %>% unname()
 
 D1 <- data.frame(top.prec = top.prec * 100, odds.ratio = mean.res, method = "median")
 D2 <- data.frame(top.prec = top.prec * 100, odds.ratio = median.mad.res, method = "median+mad (SNF)")
-D3 <- data.frame(top.prec = top.prec * 100, odds.ratio = mix.res, method = "median+cov. (SNF)")
+D3 <- data.frame(top.prec = top.prec * 100, odds.ratio = mix.res, method = "median+median (SNF)")
 D4 <- data.frame(top.prec = top.prec * 100, odds.ratio = median.mad.2.res, method = "median+mad (concatenated)")
 D5 <- data.frame(top.prec = top.prec * 100, odds.ratio = median.mad.cov.res, method = "median+mad+cov. (SNF)")
 
@@ -252,7 +254,7 @@ D <- rbind(D, D4)
 D <- rbind(D, D5)
 
 #lvls <- sort(unique(as.character(D$method)))
-lvls <- c("median+mad+cov. (SNF)", "median+mad (SNF)", "median+cov. (SNF)", "median+mad (concatenated)", "median")
+lvls <- c("median+mad+cov. (SNF)", "median+mad (SNF)", "median+median (SNF)", "median+mad (concatenated)", "median")
 D <- D %>% mutate(method = factor(method, levels = lvls))
 D <- D %>% mutate(top.prec = 100 - top.prec)
 

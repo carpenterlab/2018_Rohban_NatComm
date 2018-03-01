@@ -253,11 +253,19 @@ cr.2.mean <- compute.corr(Pf.2.mean, Pf.2.mean)
 cr.2.cov <- compute.corr(Pf.2.cov, Pf.2.cov)
 
 cr.1.2.mad <- compute.corr(Pf.1.mad, Pf.2.mad)
+cr.1.2.mad <- sim_normalize_rect(cr.1.2.mad)
+
 cr.1.2.mean <- compute.corr(Pf.1.mean, Pf.2.mean)
+cr.1.2.mean <- sim_normalize_rect(cr.1.2.mean)
+
 cr.1.2.cov <- compute.corr(Pf.1.cov, Pf.2.cov)
+cr.1.2.cov <- sim_normalize_rect(cr.1.2.cov)
 
 cr.2.1.mean <- compute.corr(Pf.2.mean, Pf.1.mean)
+cr.2.1.mean <- sim_normalize_rect(cr.2.1.mean)
+
 cr.2.1.cov <- compute.corr(Pf.2.cov, Pf.1.cov)
+cr.2.1.cov <- sim_normalize_rect(cr.2.1.cov)
 
 cr.mean <- rbind(cbind(cr.1.mean, cr.1.2.mean), cbind(cr.2.mean, cr.2.1.mean))
 cr.cov <- rbind(cbind(cr.1.cov, cr.1.2.cov), cbind(cr.2.cov, cr.2.1.cov))
@@ -280,12 +288,23 @@ colnames(m22) <- colnames(cr.1.2.cov)
 
 c2 <- rbind(cbind(m11, cr.1.2.cov), cbind(t(cr.1.2.cov), m22))
 
+m11 <- matrix(NA, NROW(Pf.1.mad$data), NROW(Pf.1.mad$data))
+m22 <- matrix(NA, NROW(Pf.2.mad$data), NROW(Pf.2.mad$data))
+rownames(m11) <- rownames(cr.1.2.mad)
+colnames(m11) <- rownames(cr.1.2.mad)
+rownames(m22) <- colnames(cr.1.2.mad)
+colnames(m22) <- colnames(cr.1.2.mad)
+
+c3 <- rbind(cbind(m11, cr.1.2.mad), cbind(t(cr.1.2.mad), m22))
+
 c1[(is.na(c1) | is.nan(c1) | is.infinite(c1))] <- -2
 c2[(is.na(c2) | is.nan(c2) | is.infinite(c2))] <- -2
+c3[(is.na(c3) | is.nan(c3) | is.infinite(c3))] <- -2
 
 af.1 <- SNFtool::affinityMatrix(Diff = 1 - c1, K = k.snf, sigma = 0.5)
 af.2 <- SNFtool::affinityMatrix(Diff = 1 - c2, K = k.snf, sigma = 0.5)
-af.snf <- SNFtool::SNF(list(af.1, af.2), K = k.snf, t = 10)
+af.3 <- SNFtool::affinityMatrix(Diff = 1 - c3, K = k.snf, sigma = 0.5)
+af.snf <- SNFtool::SNF(list(af.1, af.2, af.3), K = k.snf, t = 10)
 rownames(af.snf) <- rownames(af.1)
 colnames(af.snf) <- colnames(af.1)
 cr.mix <- af.snf
@@ -331,13 +350,13 @@ v1 <- match.brds(cr.mean[1:NROW(Pf.1.mean$data), (NROW(Pf.1.mean$data) + 1):NCOL
 v2 <- match.brds(cr.3, rng) %>% unlist
 v3 <- match.brds(cr.4, rng) %>% unlist
 
-D1 <- data.frame(method = "mean", k = rng, y = v1)
-D2 <- data.frame(method = "mean+cov.", k = rng, y = v2)
-D3 <- data.frame(method = "median+mad", k = rng, y = v3)
+D1 <- data.frame(method = "median", k = rng, y = v1)
+D2 <- data.frame(method = "median+mad+cov. (SNF)", k = rng, y = v2)
+D3 <- data.frame(method = "median+mad (SNF)", k = rng, y = v3)
 
 D <- rbind(D1, D2)
 D <- rbind(D, D3)
-D <- D %>% mutate(method = factor(method, levels = sort(unique(as.character(D$method)))))
+D <- D %>% mutate(method = factor(method, levels = c("median+mad+cov. (SNF)", "median+mad (SNF)", "median")))
 
 g <- ggplot2::ggplot(D, aes(x = k, y = y, color = method, order = method)) + geom_line() + geom_point() + ylab("how many compounds find themselves \n within their kNN in the other batch")
 g
@@ -354,11 +373,11 @@ a4 <- lapply(top.precs, function(x) enrichment_top_conn_cross(sm = cr.4, metadat
 
 
 D1 <- data.frame(p = top.precs, folds = a1, method = "median")
-D2 <- data.frame(p = top.precs, folds = a3, method = "median+cov.")
-D3 <- data.frame(p = top.precs, folds = a4, method = "median+mad")
+D2 <- data.frame(p = top.precs, folds = a3, method = "median+mad+cov. (SNF)")
+D3 <- data.frame(p = top.precs, folds = a4, method = "median+mad (SNF)")
 D <- rbind(D1, D2)
 D <- rbind(D, D3)
-D <- D %>% mutate(method = factor(method, levels = sort(unique(as.character(D$method)))))
+D <- D %>% mutate(method = factor(method, levels = c("median+mad+cov. (SNF)", "median+mad (SNF)", "median")))
 D <- D %>% mutate(p = 1 - p)
 
 g <- ggplot(D, aes(x = p * 100, y = folds, color = method)) + 

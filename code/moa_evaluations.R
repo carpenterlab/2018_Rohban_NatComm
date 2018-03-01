@@ -4,6 +4,20 @@ library(reshape2)
 library(doParallel)
 library(htmlTable)
 
+sim_normalize_rect <- function(sim_mat) {
+  # sim_mat_norm <- apply(sim_mat, 1, function(x) (ecdf(x)(x)))
+  # sim_mat_norm <- (sim_mat_norm + t(sim_mat_norm))/2
+  # rownames(sim_mat_norm) <- rownames(sim_mat)
+  # colnames(sim_mat_norm) <- colnames(sim_mat)
+  # return(sim_mat_norm)
+  sm <- sim_mat[upper.tri(sim_mat)]
+  sim_mat <- (sim_mat - median(sm))/mad(sm)
+  sim_mat <- sim_mat/quantile(sim_mat, 0.999) * 0.999
+  sim_mat[(sim_mat > 1)] <- 1
+  sim_mat[(sim_mat < -1)] <- -1
+  return(sim_mat)
+}
+
 sim_normalize <- function(sim_mat) {
   # sim_mat_norm <- apply(sim_mat, 1, function(x) (ecdf(x)(x)))
   # sim_mat_norm <- (sim_mat_norm + t(sim_mat_norm))/2
@@ -22,6 +36,9 @@ sim_normalize <- function(sim_mat) {
 same.moa <- function(moa.list.1, moa.list.2) {
   if (is.na(moa.list.1) || is.na(moa.list.2) || moa.list.1 == "" || moa.list.2 == "") 
     return(FALSE)
+  moa.list.1 <- str_to_lower(moa.list.1)
+  moa.list.2 <- str_to_lower(moa.list.2)
+  
   moas.1 <- str_split(moa.list.1, "\\|")[[1]]
   moas.2 <- str_split(moa.list.2, "\\|")[[1]]
   return(any(moas.1 %in% moas.2) | any(moas.2 %in% moas.1))
@@ -328,7 +345,7 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
 }
 
   
-cmpd_classification <- function(sm, metadata, k0 = 5) {
+cmpd_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
   sm <- sm %>% 
     reshape2::melt() %>% 
     filter(Var1 != Var2 &
