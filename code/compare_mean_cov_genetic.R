@@ -1,4 +1,5 @@
 rm(list = ls())
+
 library(dplyr)
 library(ggplot2)
 
@@ -6,6 +7,7 @@ source("moa_evaluations.R")
 
 enrichment.based.classification <- FALSE
 k.snf <- 7     # neighborhood size in SNF
+t <- 10
 k <- 1:10      # k top hits are used for classification
 not.same.batch <- F
 
@@ -13,6 +15,10 @@ cr.melt.mean <- readRDS("cr_median.rds")
 cr.melt.cov <- readRDS("cr_cov.rds")
 cr.melt.mad <- readRDS("cr_mad.rds")  
 cr.melt.median.mad.2 <- readRDS("cr_median+mad.rds") 
+
+sigma.mean <- 0.5 
+sigma.cov <- 0.5 
+sigma.mad <- 0.5 
 
 cr.mean <- cr.melt.mean %>%
   select(Var1, Var2, value) %>%
@@ -37,6 +43,11 @@ cr.cov <- cr.melt.cov %>%
   group_by(Var1, Var2) %>%
   summarise(value = max(value)) %>%
   reshape2::acast("Var1 ~ Var2")
+
+cr.mean <- sim_normalize(cr.mean) 
+cr.cov <- sim_normalize(cr.cov) 
+cr.median.mad.2 <- sim_normalize(cr.median.mad.2) 
+cr.mad <- sim_normalize(cr.mad) 
 
 metad <- readr::read_csv("../input/metadata_TA_2.csv")
 gene.s <- function(x) {
@@ -81,19 +92,27 @@ cr.median.mad.2[is.na(cr.median.mad.2)] <- 0
 cr.mad[is.na(cr.mad)] <- 0
 cr.cov[is.na(cr.cov)] <- 0
 
-af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = 0.5)
-af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.mad, K = k.snf, sigma = 0.5)
-af.snf <- SNFtool::SNF(list(af.1, af.2), K = k.snf, t = 10)
+af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = sigma.mean)
+af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.mad, K = k.snf, sigma = sigma.mad)
+af.snf <- SNFtool::SNF(list(af.1, af.2), K = k.snf, t = t)
 rownames(af.snf) <- rownames(af.1)
 colnames(af.snf) <- colnames(af.1)
 cr.median.mad <- af.snf
 
-af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = 0.5)
-af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.cov, K = k.snf, sigma = 0.5)
-af.snf <- SNFtool::SNF(list(af.1, af.2), K = k.snf, t = 10)
+af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = sigma.mean)
+af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.cov, K = k.snf, sigma = sigma.cov)
+af.snf <- SNFtool::SNF(list(af.1, af.2), K = k.snf, t = t)
 rownames(af.snf) <- rownames(af.1)
 colnames(af.snf) <- colnames(af.1)
 cr.mix <- af.snf
+
+af.1 <- SNFtool::affinityMatrix(Diff = 1 - cr.mean, K = k.snf, sigma = sigma.mean)
+af.2 <- SNFtool::affinityMatrix(Diff = 1 - cr.mad, K = k.snf, sigma = sigma.mad)
+af.3 <- SNFtool::affinityMatrix(Diff = 1 - cr.cov, K = k.snf, sigma = sigma.cov)
+af.snf <- SNFtool::SNF(list(af.1, af.2, af.3), K = k.snf, t = t)
+rownames(af.snf) <- rownames(af.1)
+colnames(af.snf) <- colnames(af.1)
+cr.median.mad.cov <- af.snf
 
 metadata <- cr.melt.mean %>%
   select(Var1, Metadata_moa.x, Metadata_Plate_Map_Name.x) %>%
@@ -157,15 +176,16 @@ if (enrichment.based.classification) {
       geom_line() + 
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = k, minor_breaks = k) +
-      ylab("No. of compounds with a \n same MOA compound in their k-NNs")
+      ylab("No. of genes with a \n same Pathway gene in their k-NNs")
     print(g)    
     ggsave("classification_comparison.png", g, width = 7, height = 5)
   }
 } else {
-  d.mean <- cmpd_knn_classification(cr.mean, metadata, k) 
-  d.median.mad <- cmpd_knn_classification(cr.median.mad, metadata, k) 
-  d.mix <- cmpd_knn_classification(cr.mix, metadata, k) 
+  d.mean <- cmpd_knn_classification(cr.mean, metadata, k, not.same.batch = not.same.batch) 
+  d.mix <- cmpd_knn_classification(cr.mix, metadata, k, not.same.batch = not.same.batch) 
+  d.median.mad <- cmpd_knn_classification(cr.median.mad, metadata, k, not.same.batch = not.same.batch) 
   d.median.mad.2 <- cmpd_knn_classification(cr.median.mad.2, metadata, k, not.same.batch = not.same.batch) 
+  d.median.mad.cov <- cmpd_knn_classification(cr.median.mad.cov, metadata, k, not.same.batch = not.same.batch) 
   
   if (length(k) == 1) {
     d.mean %>% NROW %>% print
@@ -191,20 +211,24 @@ if (enrichment.based.classification) {
       htmlTable::htmlTable() %>%
       print
   } else {
-    l.mean <- lapply(d.mean["pass", ], function(x) sum(x)) 
-    l.median.mad <- lapply(d.median.mad["pass", ], function(x) sum(x)) 
-    l.median.mad.2 <- lapply(d.median.mad.2["pass", ], function(x) sum(x)) 
-    l.mix <- lapply(d.mix["pass", ], function(x) sum(x))
+    l.mean <- lapply(d.mean[3, ], function(x) sum(x)) 
+    l.mix <- lapply(d.mix[3, ], function(x) sum(x))
+    l.median.mad <- lapply(d.median.mad[3, ], function(x) sum(x)) 
+    l.median.mad.2 <- lapply(d.median.mad.2[3, ], function(x) sum(x)) 
+    l.median.mad.cov <- lapply(d.median.mad.cov[3, ], function(x) sum(x)) 
     
     D <- data.frame(method = "median", k = k, tp = (unlist(l.mean)))
-    D <- rbind(D, 
-               data.frame(method = "median+cov. (SNF)", k = k, tp = (unlist(l.mix))))
+    #D <- rbind(D, 
+    #           data.frame(method = "median+cov. (SNF)", k = k, tp = (unlist(l.mix))))
     D <- rbind(D, 
                data.frame(method = "median+mad (SNF)", k = k, tp = (unlist(l.median.mad))))
     D <- rbind(D, 
                data.frame(method = "median+mad (concatenated)", k = k, tp = (unlist(l.median.mad.2))))
-    D <- D %>% mutate(method = factor(method, levels = sort(unique(as.character(D$method)))))
+    D <- rbind(D, 
+               data.frame(method = "median+mad+cov. (SNF)", k = k, tp = (unlist(l.median.mad.cov))))
     
+    lvls <- c("median+mad+cov. (SNF)", "median+mad (SNF)", "median+mad (concatenated)", "median")
+    D <- D %>% mutate(method = factor(method, levels = lvls))
     
     g <- ggplot(D, aes(x = k, y = tp, color = method, order = as.character(method))) + 
       geom_point() + 
@@ -217,33 +241,41 @@ if (enrichment.based.classification) {
   }
 }
 
-top.prec <- seq(from = 0.98, to = 0.999, by = 0.002)
+top.prec <- c(seq(from = 0.98, to = 0.997, by = 0.002))
 enrichment_top_conn <- Vectorize(enrichment_top_conn, vectorize.args = "top.perc")
 sm.mean <- perpare_sm(sm = cr.mean, metadata = metadata)
 sm.mix <- perpare_sm(sm = cr.mix, metadata = metadata)
 sm.median.mad <- perpare_sm(sm = cr.median.mad, metadata = metadata)
 sm.median.mad.2 <- perpare_sm(sm = cr.median.mad.2, metadata = metadata)
+sm.median.mad.cov <- perpare_sm(sm = cr.median.mad.cov, metadata = metadata)
 
 mean.res <- enrichment_top_conn(sm = sm.mean, metadata = metadata, top.perc = top.prec, not.same.batch = not.same.batch)
 mix.res <- enrichment_top_conn(sm = sm.mix, metadata = metadata, top.perc = top.prec, not.same.batch = not.same.batch)
 median.mad.res <- enrichment_top_conn(sm = sm.median.mad, metadata = metadata, top.perc = top.prec, not.same.batch = not.same.batch)
 median.mad.2.res <- enrichment_top_conn(sm = sm.median.mad.2, metadata = metadata, top.perc = top.prec, not.same.batch = not.same.batch)
+median.mad.cov.res <- enrichment_top_conn(sm = sm.median.mad.cov, metadata = metadata, top.perc = top.prec, not.same.batch = not.same.batch)
 
-mean.res <- mean.res["estimate",] %>% unlist %>% unname()
-mix.res <- mix.res["estimate",] %>% unlist %>% unname()
-median.mad.res <- median.mad.res["estimate",] %>% unlist %>% unname()
-median.mad.2.res <- median.mad.2.res["estimate",] %>% unlist %>% unname()
+
+mean.res <- mean.res[3,] %>% unlist %>% unname()
+mix.res <- mix.res[3,] %>% unlist %>% unname()
+median.mad.res <- median.mad.res[3,] %>% unlist %>% unname()
+median.mad.2.res <- median.mad.2.res[3,] %>% unlist %>% unname()
+median.mad.cov.res <- median.mad.cov.res[3,] %>% unlist %>% unname()
 
 D1 <- data.frame(top.prec = top.prec * 100, odds.ratio = mean.res, method = "median")
 D2 <- data.frame(top.prec = top.prec * 100, odds.ratio = median.mad.res, method = "median+mad (SNF)")
 D3 <- data.frame(top.prec = top.prec * 100, odds.ratio = mix.res, method = "median+cov. (SNF)")
 D4 <- data.frame(top.prec = top.prec * 100, odds.ratio = median.mad.2.res, method = "median+mad (concatenated)")
+D5 <- data.frame(top.prec = top.prec * 100, odds.ratio = median.mad.cov.res, method = "median+mad+cov. (SNF)")
 
 D <- rbind(D1, D2)
-D <- rbind(D, D3)
+#D <- rbind(D, D3)
 D <- rbind(D, D4)
+D <- rbind(D, D5)
 
-D <- D %>% mutate(method = factor(method, levels = sort(unique(as.character(D$method)))))
+#lvls <- sort(unique(as.character(D$method)))
+lvls <- c("median+mad+cov. (SNF)", "median+mad (SNF)", "median+mad (concatenated)", "median")
+D <- D %>% mutate(method = factor(method, levels = lvls))
 D <- D %>% mutate(top.prec = 100 - top.prec)
 
 g <- ggplot(D, aes(x = top.prec, y = odds.ratio, color = method, order = method)) + 
@@ -255,4 +287,3 @@ g <- ggplot(D, aes(x = top.prec, y = odds.ratio, color = method, order = method)
   xlab("p")
 print(g) 
 ggsave("global_comparison.png", g, width = 7, height = 5)
-
