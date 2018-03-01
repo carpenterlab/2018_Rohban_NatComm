@@ -345,7 +345,7 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
 }
 
   
-cmpd_classification <- function(sm, metadata, k0 = 5) {
+cmpd_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
   sm <- sm %>% 
     reshape2::melt() %>% 
     filter(Var1 != Var2 &

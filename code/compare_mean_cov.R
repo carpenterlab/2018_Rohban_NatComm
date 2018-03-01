@@ -98,6 +98,8 @@ metadata <- cr.melt.mean %>%
   mutate(Metadata_broad_sample = Var1, Metadata_moa = Metadata_moa.x, Metadata_Plate_Map_Name = Metadata_Plate_Map_Name.x) %>%
   select(-Var1, -Metadata_moa.x, -Metadata_Plate_Map_Name.x)
 
+metadata <- metadata %>% mutate(Metadata_moa = str_to_lower(Metadata_moa))
+
 cmpd_classification <- Vectorize(cmpd_classification, "k0")
 cmpd_knn_classification <- Vectorize(cmpd_knn_classification, "k0")
 
@@ -159,11 +161,12 @@ if (enrichment.based.classification) {
     ggsave("classification_comparison.png", g, width = 7, height = 5)
   }
 } else {
-  d.mean <- cmpd_knn_classification(cr.mean, metadata, k, not.same.batch = not.same.batch) 
-  d.mix <- cmpd_knn_classification(cr.mix, metadata, k, not.same.batch = not.same.batch) 
-  d.median.mad <- cmpd_knn_classification(cr.median.mad, metadata, k, not.same.batch = not.same.batch) 
-  d.median.mad.2 <- cmpd_knn_classification(cr.median.mad.2, metadata, k, not.same.batch = not.same.batch) 
-  d.median.mad.cov <- cmpd_knn_classification(cr.median.mad.cov, metadata, k, not.same.batch = not.same.batch) 
+  k <- 5:10
+  d.mean <- cmpd_classification(cr.mean, metadata, k, not.same.batch = not.same.batch) 
+  d.mix <- cmpd_classification(cr.mix, metadata, k, not.same.batch = not.same.batch) 
+  d.median.mad <- cmpd_classification(cr.median.mad, metadata, k, not.same.batch = not.same.batch) 
+  d.median.mad.2 <- cmpd_classification(cr.median.mad.2, metadata, k, not.same.batch = not.same.batch) 
+  d.median.mad.cov <- cmpd_classification(cr.median.mad.cov, metadata, k, not.same.batch = not.same.batch) 
   
   if (length(k) == 1) {
     d.mean %>% NROW %>% print
@@ -189,11 +192,11 @@ if (enrichment.based.classification) {
       htmlTable::htmlTable() %>%
       print
   } else {
-    l.mean <- lapply(d.mean[3, ], function(x) sum(x)) 
-    l.mix <- lapply(d.mix[3, ], function(x) sum(x))
-    l.median.mad <- lapply(d.median.mad[3, ], function(x) sum(x)) 
-    l.median.mad.2 <- lapply(d.median.mad.2[3, ], function(x) sum(x)) 
-    l.median.mad.cov <- lapply(d.median.mad.cov[3, ], function(x) sum(x)) 
+    l.mean <- lapply(d.mean[5, ], function(x) sum(x)) 
+    l.mix <- lapply(d.mix[5, ], function(x) sum(x))
+    l.median.mad <- lapply(d.median.mad[5, ], function(x) sum(x)) 
+    l.median.mad.2 <- lapply(d.median.mad.2[5, ], function(x) sum(x)) 
+    l.median.mad.cov <- lapply(d.median.mad.cov[5, ], function(x) sum(x)) 
     
     D <- data.frame(method = "median", k = k, tp = (unlist(l.mean)))
     D <- rbind(D, 
