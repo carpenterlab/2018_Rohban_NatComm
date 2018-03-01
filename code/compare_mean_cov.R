@@ -161,7 +161,7 @@ if (enrichment.based.classification) {
       geom_line() + 
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = k, minor_breaks = k) +
-      ylab("No. of compounds with a \n same MOA compound in their k-NNs")
+      ylab("No. of treatment with a \n same MOA/Pathway treatment in their k-NNs")
     print(g)    
     ggsave("classification_comparison.png", g, width = 7, height = 5)
   }
@@ -220,7 +220,12 @@ if (enrichment.based.classification) {
       geom_line() + 
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = k, minor_breaks = k) +
-      ylab("No. of compounds with a \n same MOA compound in their k-NNs")
+      ylab("No. of treatments") + 
+      ggtitle("No. of treatments with a \n relevant match in their k-NNs") +
+      theme_bw() +
+      theme(axis.text = element_text(size=17), text = element_text(size=15)) + 
+      theme(plot.title = element_text(hjust = 0.5)) + 
+      theme(legend.title=element_blank())
     print(g) 
     ggsave("classification_comparison.png", g, width = 7, height = 5)
   }
@@ -268,7 +273,12 @@ g <- ggplot(D, aes(x = top.prec, y = odds.ratio, color = method, order = method)
   geom_line() + 
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_continuous(breaks = 100 - rev(top.prec[seq(from = 1, to = length(top.prec), by = 2)] * 100), minor_breaks = 100 - rev(top.prec * 100)) +
-  ylab("No. of folds of enrichment \n for top p% conn. to have same MOA") + 
-  xlab("p")
+  ylab("Folds of enrichment") + 
+  xlab("p") +
+  ggtitle("Folds of enrichment for top p% connections \n to have same MOAs/Pathways") +
+  theme_bw() +
+  theme(axis.text = element_text(size=17), text = element_text(size=15)) + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(legend.title=element_blank())
 print(g) 
 ggsave("global_comparison.png", g, width = 7, height = 5)
