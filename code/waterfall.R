@@ -4,12 +4,30 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 
-MOA <- "retinoid receptor agonist"
+MOA <- "hdac inhibitor"
 line.width <- 3
 snf.on.mean <- F
 
-a <- readRDS("../corr_old/cr_mean.rds")
-b <- readRDS("../corr_old/cr_mixmeancov.rds")
+sanitize <- function(a) {
+  a.t <- c(a$Var1, a$Var2) %>% unique
+  a.x <- a %>%
+    select(Var1, Var2, value) %>%
+    rbind(data.frame(Var1 = a.t, Var2 = a.t, value = 1)) %>% 
+    reshape2::acast("Var1 ~ Var2") 
+  a.x[lower.tri(a.x, diag = F)] <- t(a.x)[lower.tri(t(a.x), diag = F)]
+  meta <- rbind(a %>% select(Var1, Metadata_moa.x) %>% rename(Var = Var1, Metadata_moa = Metadata_moa.x), a %>% select(Var2, Metadata_moa.y) %>% rename(Var = Var2, Metadata_moa = Metadata_moa.y)) %>% unique 
+  a <- a.x %>%
+    reshape2::melt() %>%
+    left_join(meta, by = c("Var1" = "Var")) %>%
+    left_join(meta, by = c("Var2" = "Var"))
+  return(a)
+}
+
+a <- readRDS("sm_median_mad.rds")
+b <- readRDS("sm_median_mad_cov.rds")
+
+a <- sanitize(a)
+b <- sanitize(b)
 
 if (snf.on.mean) {
   cr.mean <- a %>%
@@ -91,8 +109,8 @@ b.t <- b.y %>%
   as.matrix() %>% 
   as.vector()
 
-tit1 <- paste(MOA, "mean", sep = "-", collapse = "")
-tit2 <- paste(MOA, "mean+cov", sep = "-", collapse = "")
+tit1 <- paste(MOA, "median+mad (SNF)", sep = "-", collapse = "")
+tit2 <- paste(MOA, "median+mad+cov. (SNF)", sep = "-", collapse = "")
 
 g1 <- ggplot(a.y, aes(x = Var1, y = Var2.x)) + 
   geom_raster(aes(fill=same.moa)) + 
