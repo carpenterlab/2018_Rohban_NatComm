@@ -9,7 +9,7 @@ enrichment.based.classification <- FALSE
 k.snf <- 7     # neighborhood size in SNF
 t <- 10
 k <- 1:10      # k top hits are used for classification
-genetic <- T
+genetic <- F
 not.same.batch <- T
 snf.med.mad <- T
 
@@ -22,9 +22,9 @@ cr.melt.cov <- readRDS("cr_cov.rds")
 cr.melt.mad <- readRDS("cr_mad.rds")  
 cr.melt.median.mad.2 <- readRDS("cr_median+mad.rds") 
 
-sigma.mean <- 0.8 
-sigma.cov <- 0.8 
-sigma.mad <- 0.8 
+sigma.mean <- 0.5 
+sigma.cov <- 0.5 
+sigma.mad <- 0.5 
 
 cr.mean <- cr.melt.mean %>%
   select(Var1, Var2, value) %>%
