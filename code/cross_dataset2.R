@@ -15,6 +15,7 @@ feat.list <- readr::read_csv("../input/feature_list.txt", col_names = F)
 feat.list <- feat.list %>% unlist() %>% unname()
 
 metadata.cdrp <- readr::read_csv("../input/metadata_CDRP.csv")
+metadata.cdrp <- metadata.cdrp %>% mutate(Metadata_moa = str_to_lower(Metadata_moa))
 metadata.repurp <- NULL
 
 read.and.summarize <- function(profile.type, path, feat.list, metadata.df) {
@@ -304,7 +305,7 @@ c3[(is.na(c3) | is.nan(c3) | is.infinite(c3))] <- -2
 af.1 <- SNFtool::affinityMatrix(Diff = 1 - c1, K = k.snf, sigma = 0.5)
 af.2 <- SNFtool::affinityMatrix(Diff = 1 - c2, K = k.snf, sigma = 0.5)
 af.3 <- SNFtool::affinityMatrix(Diff = 1 - c3, K = k.snf, sigma = 0.5)
-af.snf <- SNFtool::SNF(list(af.1, af.2, af.3), K = k.snf, t = 10)
+af.snf <- SNFtool::SNF(list(af.1, af.2, af.3), K = k.snf, t = 15)
 rownames(af.snf) <- rownames(af.1)
 colnames(af.snf) <- colnames(af.1)
 cr.mix <- af.snf
@@ -365,6 +366,8 @@ metadata.repurp <- Pf.2.cov$data %>%
   select(matches("Metadata_")) %>%
   unique %>%
   mutate(Metadata_broad_sample = str_sub(Metadata_broad_sample, 1, 13))
+
+metadata.repurp <- metadata.repurp %>% mutate(Metadata_moa = str_to_lower(Metadata_moa))
 
 top.precs <- seq(from = 0.98, to = 0.999, by = 0.002)
 a1 <- lapply(top.precs, function(x) enrichment_top_conn_cross(sm = cr.1, metadata1 = metadata.cdrp, metadata2 = metadata.repurp, top.perc = x)$test$estimate) %>% unlist
