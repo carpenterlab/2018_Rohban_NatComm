@@ -16,6 +16,7 @@ sim_normalize_rect <- function(sim_mat) {
   sim_mat <- sim_mat/quantile(sim_mat, 0.999) * 0.999
   sim_mat[(sim_mat > 1)] <- 1
   sim_mat[(sim_mat < -1)] <- -1
+  diag(sim_mat) <- 1
   
   # sm.melt <- sim_mat %>% 
   #   reshape2::melt()
@@ -43,16 +44,23 @@ sim_normalize <- function(sim_mat) {
   # sim_mat[(sim_mat > 1)] <- 1
   # sim_mat[(sim_mat < -1)] <- -1
   
-  sm.melt <- sim_mat %>%
-    reshape2::melt()
-
-  sm.melt <- sm.melt %>%
-    mutate(value = ecdf(value)(value))
-
-  sim_mat <- sm.melt %>%
-    reshape2::acast(Var1 ~ Var2)
-
+  sm <- sim_mat[upper.tri(sim_mat)]
+  sim_mat <- (sim_mat - median(sm))/mad(sm)
+  sim_mat <- sim_mat/quantile(sim_mat, 0.999) * 0.999
+  sim_mat[(sim_mat > 1)] <- 1
+  sim_mat[(sim_mat < -1)] <- -1
   diag(sim_mat) <- 1
+  
+  # sm.melt <- sim_mat %>%
+  #   reshape2::melt()
+  # 
+  # sm.melt <- sm.melt %>%
+  #   mutate(value = ecdf(value)(value))
+  # 
+  # sim_mat <- sm.melt %>%
+  #   reshape2::acast(Var1 ~ Var2)
+  # 
+  # diag(sim_mat) <- 1
   return(sim_mat)
 }
 
