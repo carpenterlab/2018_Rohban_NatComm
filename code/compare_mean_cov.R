@@ -241,6 +241,7 @@ sm.median.mad.cov <- perpare_sm(sm = cr.median.mad.cov, metadata = metadata)
 
 saveRDS(sm.median.mad, "sm_median_mad.rds")
 saveRDS(sm.median.mad.cov, "sm_median_mad_cov.rds")
+saveRDS(sm.mix, "sm_median_median.rds")
 
 mean.res <- enrichment_top_conn(sm = sm.mean, metadata = metadata, top.perc = top.prec, not.same.batch = not.same.batch)
 mix.res <- enrichment_top_conn(sm = sm.mix, metadata = metadata, top.perc = top.prec, not.same.batch = not.same.batch)
