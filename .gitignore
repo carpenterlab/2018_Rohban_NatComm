@@ -3,6 +3,7 @@
 .RData
 .Ruserdata
 cr_*.rds
+code/sm_*.rds
 tmp/
 random_projection.rds
 *_normalized_variable_selected.csv
