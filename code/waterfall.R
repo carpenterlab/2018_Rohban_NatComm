@@ -4,7 +4,7 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 
-MOA <- "hdac inhibitor"
+MOA <- "plk inhibitor"
 line.width <- 3
 snf.on.mean <- F
 
@@ -25,9 +25,11 @@ sanitize <- function(a) {
 
 a <- readRDS("sm_median_mad.rds")
 b <- readRDS("sm_median_mad_cov.rds")
+c <- readRDS("sm_median_median.rds")
 
 a <- sanitize(a)
 b <- sanitize(b)
+c <- sanitize(c)
 
 if (snf.on.mean) {
   cr.mean <- a %>%
@@ -54,6 +56,7 @@ if (snf.on.mean) {
 
 a <- a %>% filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "" & Var1 != Var2)
 b <- b %>% filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "" & Var1 != Var2)
+c <- c %>% filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "" & Var1 != Var2)
 
 n <- a$Var1 %>% unique %>% length
 a.x <- a %>% filter(str_detect(Metadata_moa.x, MOA)) %>% arrange(-value) %>% group_by(Var1) %>% mutate(Var2.x = seq(n - 1, 1, -1)) %>% ungroup() %>%
@@ -62,8 +65,12 @@ a.x <- a %>% filter(str_detect(Metadata_moa.x, MOA)) %>% arrange(-value) %>% gro
 b.x <- b %>% filter(str_detect(Metadata_moa.x, MOA)) %>% arrange(-value) %>% group_by(Var1) %>% mutate(Var2.x = seq(n - 1 , 1, -1)) %>% ungroup() %>%
   mutate(same.moa = str_detect(Metadata_moa.y, MOA))
 
+c.x <- c %>% filter(str_detect(Metadata_moa.x, MOA)) %>% arrange(-value) %>% group_by(Var1) %>% mutate(Var2.x = seq(n - 1 , 1, -1)) %>% ungroup() %>%
+  mutate(same.moa = str_detect(Metadata_moa.y, MOA))
+
 a.y <- a.x %>% select(Var1, Var2.x, same.moa)
 b.y <- b.x %>% select(Var1, Var2.x, same.moa)
+c.y <- c.x %>% select(Var1, Var2.x, same.moa)
 
 expand <- function(x) {
   if (as.vector(as.matrix(x[1,"same.moa"]))) {
@@ -90,6 +97,15 @@ b.y <- bb.y %>%
   select(-Var2.x) %>%
   rename(Var2.x = Var2.xx)
 
+cc.y <- c.y %>%
+  group_by(Var1, Var2.x, same.moa) %>%
+  do(expand(.)) %>%
+  ungroup()
+
+c.y <- cc.y %>%
+  select(-Var2.x) %>%
+  rename(Var2.x = Var2.xx)
+
 
 a.t <- a.y %>% 
   filter(same.moa) %>%
@@ -109,8 +125,18 @@ b.t <- b.y %>%
   as.matrix() %>% 
   as.vector()
 
+c.t <- c.y %>% 
+  filter(same.moa) %>%
+  group_by(Var1) %>%
+  summarise(vl = max(Var2.x)) %>%
+  arrange(-vl) %>%
+  select(Var1) %>%
+  as.matrix() %>% 
+  as.vector()
+
 tit1 <- paste(MOA, "median+mad (SNF)", sep = "-", collapse = "")
 tit2 <- paste(MOA, "median+mad+cov. (SNF)", sep = "-", collapse = "")
+tit3 <- paste(MOA, "median+median. (SNF)", sep = "-", collapse = "")
 
 g1 <- ggplot(a.y, aes(x = Var1, y = Var2.x)) + 
   geom_raster(aes(fill=same.moa)) + 
@@ -142,5 +168,21 @@ g2 <- ggplot(b.y, aes(x = Var1, y = Var2.x)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_x_discrete(limits = b.t) 
 
+g3 <- ggplot(c.y, aes(x = Var1, y = Var2.x)) + 
+  geom_raster(aes(fill=same.moa)) + 
+  scale_fill_manual(values=c("white", "black")) + 
+  scale_y_continuous(limits = c(0, NA)) +
+  theme(axis.text.x = element_blank(), 
+        axis.text.y = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank()) + 
+  xlab("") + 
+  ylab("") +
+  theme(legend.position="none") + 
+  ggtitle(tit3) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_discrete(limits = c.t) 
+
 ggsave(sprintf("../figs/%s.png", tit1), g1, width = 10, height = 8)
 ggsave(sprintf("../figs/%s.png", tit2), g2, width = 10, height = 8)
+ggsave(sprintf("../figs/%s.png", tit3), g3, width = 10, height = 8)
