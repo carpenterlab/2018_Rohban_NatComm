@@ -4,8 +4,8 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 
-MOA <- "plk inhibitor"
-line.width <- 3
+MOA <- "hdac inhibitor"
+line.width <- 5
 snf.on.mean <- F
 
 sanitize <- function(a) {
@@ -72,40 +72,52 @@ a.y <- a.x %>% select(Var1, Var2.x, same.moa)
 b.y <- b.x %>% select(Var1, Var2.x, same.moa)
 c.y <- c.x %>% select(Var1, Var2.x, same.moa)
 
-expand <- function(x) {
+expand <- function(x, n.dat) {
   if (as.vector(as.matrix(x[1,"same.moa"]))) {
-    return(data.frame(Var2.xx = seq(from = as.vector(as.matrix(x[,"Var2.x"])), to = as.vector(as.matrix(x[,"Var2.x"])) + line.width, by = 1)))
+    return(data.frame(Var2.xx = seq(from = as.vector(as.matrix(x[,"Var2.x"])), to = (as.vector(as.matrix(x[,"Var2.x"])) + line.width), by = 1)))
   } 
   return(data.frame(Var2.xx = as.vector(as.matrix(x[,"Var2.x"]))))
 }
 
+n.dat <- a.y$Var2.x %>% unique %>% length
 aa.y <- a.y %>%
   group_by(Var1, Var2.x, same.moa) %>%
-  do(expand(.)) %>%
+  do(expand(., n.dat)) %>%
   ungroup()
 
 a.y <- aa.y %>%
   select(-Var2.x) %>%
   rename(Var2.x = Var2.xx)
 
+a.y <- a.y %>%
+  group_by(Var1, Var2.x) %>%
+  summarise(same.moa = any(same.moa))
+
 bb.y <- b.y %>%
   group_by(Var1, Var2.x, same.moa) %>%
-  do(expand(.)) %>%
+  do(expand(., n.dat)) %>%
   ungroup()
 
 b.y <- bb.y %>%
   select(-Var2.x) %>%
   rename(Var2.x = Var2.xx)
 
+b.y <- b.y %>%
+  group_by(Var1, Var2.x) %>%
+  summarise(same.moa = any(same.moa))
+
 cc.y <- c.y %>%
   group_by(Var1, Var2.x, same.moa) %>%
-  do(expand(.)) %>%
+  do(expand(., n.dat)) %>%
   ungroup()
 
 c.y <- cc.y %>%
   select(-Var2.x) %>%
   rename(Var2.x = Var2.xx)
 
+c.y <- c.y %>%
+  group_by(Var1, Var2.x) %>%
+  summarise(same.moa = any(same.moa))
 
 a.t <- a.y %>% 
   filter(same.moa) %>%
