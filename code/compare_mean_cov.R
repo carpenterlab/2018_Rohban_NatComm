@@ -223,7 +223,7 @@ if (enrichment.based.classification) {
       ylab("No. of treatments") + 
       ggtitle("No. of treatments with a \n relevant match in their k-NNs") +
       theme_bw() +
-      theme(axis.text = element_text(size=17), text = element_text(size=15)) + 
+      theme(axis.text = element_text(size=20), text = element_text(size=15)) + 
       theme(plot.title = element_text(hjust = 0.5)) + 
       theme(legend.title=element_blank())
     print(g) 
@@ -281,7 +281,7 @@ g <- ggplot(D, aes(x = top.prec, y = odds.ratio, color = method, order = method)
   xlab("p") +
   ggtitle("Folds of enrichment for top p% connections \n to have same MOAs/Pathways") +
   theme_bw() +
-  theme(axis.text = element_text(size=17), text = element_text(size=15)) + 
+  theme(axis.text = element_text(size=20), text = element_text(size=15)) + 
   theme(plot.title = element_text(hjust = 0.5)) + 
   theme(legend.title=element_blank())
 print(g) 
