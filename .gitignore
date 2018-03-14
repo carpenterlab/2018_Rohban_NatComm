@@ -15,4 +15,4 @@ random_projection.rds
 metadata/*
 backend/*
 tmp_trad/*
-workspace.RData
+*.RData
