@@ -7,12 +7,35 @@ library(ggplot2)
 source("moa_evaluations.R")
 
 load("workspace.RData")
+a <- NULL
+while(is.null(a)) {
+  a <- tryCatch({
+    mean.res <- moa_recall(sm = cr.mean, metadata = metadata, n.cores = 3, N = 100)}, error = function(e) {NULL})
+}
 
-mean.res <- moa_recall(sm = cr.mean, metadata = metadata, n.cores = 3, N = 100)
-median.mad.cov.res <- moa_recall(sm = cr.median.mad.cov, metadata = metadata, n.cores = 3, N = 100)
-mix.res <- moa_recall(sm = cr.mix, metadata = metadata, n.cores = 3, N = 100)
-median.mad.2.res <- moa_recall(sm = cr.median.mad.2, metadata = metadata, n.cores = 3, N = 100)
-median.mad.res <- moa_recall(sm = cr.median.mad, metadata = metadata, n.cores = 3, N = 100)
+a <- NULL
+while(is.null(a)) {
+  a <- tryCatch({
+    median.mad.cov.res <- moa_recall(sm = cr.median.mad.cov, metadata = metadata, n.cores = 3, N = 100)}, error = function(e) {NULL})
+}
+
+a <- NULL
+while(is.null(a)) {
+  a <- tryCatch({
+    median.mad.2.res <- moa_recall(sm = cr.median.mad.2, metadata = metadata, n.cores = 3, N = 100)}, error = function(e) {NULL})
+}
+
+a <- NULL
+while(is.null(a)) {
+  a <- tryCatch({
+    median.mad.res <- moa_recall(sm = cr.median.mad, metadata = metadata, n.cores = 3, N = 100)}, error = function(e) {NULL})
+}
+
+a <- NULL
+while(is.null(a)) {
+  a <- tryCatch({
+    mix.res <- moa_recall(sm = cr.mix, metadata = metadata, n.cores = 3, N = 100)}, error = function(e) {NULL})
+}
 
 mean.n <- mean.res %>% filter(!is.na(p.value)) %>% mutate(p.value = p.adjust(p.value)) %>% filter(p.value < 0.05) %>% NROW()
 median.mad.cov.n <- median.mad.cov.res %>% filter(!is.na(p.value)) %>% mutate(p.value = p.adjust(p.value)) %>% filter(p.value < 0.05) %>% NROW()

@@ -178,7 +178,7 @@ moa_recall <- function(sm, metadata, n.cores = 1, N = 1000) {
 
   group_recall <- function(sm, brds) {
     diag(sm[brds, brds]) <- NA
-    
+
     median(apply(sm[brds, brds], 1, function(x) median(x, na.rm = T)), na.rm = T)
     #sm[brds, brds] %>%
     #  as.dist() %>%
@@ -204,7 +204,7 @@ moa_recall <- function(sm, metadata, n.cores = 1, N = 1000) {
     
     nulls <- foreach (j = 1:N, .combine = rbind) %do% {
       brds <- metadata %>%
-        sample_n(NROW(brds.moa)) %>%
+        sample_n(length(brds.moa)) %>%
         select(Metadata_broad_sample) %>% 
         as.matrix() %>%
         as.vector()
