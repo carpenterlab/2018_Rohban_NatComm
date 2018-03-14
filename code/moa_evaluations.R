@@ -362,7 +362,8 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
              | (Metadata_Plate_Map_Name.x != Metadata_Plate_Map_Name.y))
   }
   
-  thr <- quantile(sm$value, 0.99, na.rm = T)
+  #thr <- quantile(sm$value, 0.99, na.rm = T)
+  thr <- -Inf
   
   return(
     sm %>% 
