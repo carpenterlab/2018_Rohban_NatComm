@@ -7,7 +7,7 @@ load("workspace.RData")
 
 source("moa_evaluations.R")
 
-N <- 100
+N <- 1000
 a <- NULL
 while(is.null(a)) {
   a <- tryCatch({
@@ -48,6 +48,10 @@ D <- data.frame(method = c("median", "median+mad (concatenated)", "median+median
 
 D <- D %>% mutate(method = factor(method, levels = rev(c("median", "median+mad (concatenated)", "median+median (SNF)", "median+mad (SNF)", "median+mad+cov. (SNF)"))))
 
-ggplot(D, aes(x = method, y = no.moas, fill = method, order = method)) + geom_bar(stat = "identity") + scale_x_discrete(breaks = NULL)
+g <- ggplot(D, aes(x = method, y = no.moas, fill = method, order = method)) + geom_bar(stat = "identity") + scale_x_discrete(breaks = NULL) + scale_y_continuous(breaks = seq(from = 0, to = max(D$no.moas), by = floor(max(D$no.moas)/5)))
+
+print(g)
+
+ggsave("per_moa.png", g)
 
 save.image("per_moa.RData")
