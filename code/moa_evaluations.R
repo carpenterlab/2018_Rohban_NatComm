@@ -179,10 +179,10 @@ moa_recall <- function(sm, metadata, n.cores = 1, N = 1000) {
   group_recall <- function(sm, brds) {
     diag(sm[brds, brds]) <- NA
 
-    median(apply(sm[brds, brds], 1, function(x) median(x, na.rm = T)), na.rm = T)
-    #sm[brds, brds] %>%
-    #  as.dist() %>%
-    #  mean(., na.rm = T)
+    #median(apply(sm[brds, brds], 1, function(x) median(x, na.rm = T)), na.rm = T)
+    sm[brds, brds] %>%
+      as.dist() %>%
+      mean(., na.rm = T)
   }  
   
   brds.ref <- colnames(sm)
