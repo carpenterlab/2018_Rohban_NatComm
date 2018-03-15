@@ -177,7 +177,7 @@ moa_recall <- function(sm, metadata, n.cores = 1, N = 1000) {
   moas <- setdiff(moas, "")
 
   group_recall <- function(sm, brds) {
-    diag(sm[brds, brds]) <- NA
+    #diag(sm[brds, brds]) <- NA
 
     #median(apply(sm[brds, brds], 1, function(x) median(x, na.rm = T)), na.rm = T)
     sm[brds, brds] %>%
@@ -220,12 +220,13 @@ moa_recall <- function(sm, metadata, n.cores = 1, N = 1000) {
   return(res)
 }
 
-moa_recall_fisher <- function(sm, metadata, thr) {
+moa_recall_fisher <- function(sm, metadata) {
   moas <- unlist(lapply(metadata$Metadata_moa, function(x) str_split(x, "\\|")[[1]]))
   moas <- unique(moas)
   moas <- setdiff(moas, NA)
   moas <- setdiff(moas, "")
  
+  thr <- quantile(sm %>% as.dist(), 0.99, na.rm = T)
   brds.ref <- colnames(sm)
   
   res <- foreach (moa = moas, .combine = rbind) %dopar% {
@@ -238,7 +239,7 @@ moa_recall_fisher <- function(sm, metadata, thr) {
     brds.moa <- intersect(brds.moa, brds.ref)
     brds.other <- setdiff(brds.ref, brds.moa)
     
-    if (length(brds.moa) < 6) {
+    if (length(brds.moa) < 2) {
       return(data.frame(MOA = moa, p.value = NA))
     }
     

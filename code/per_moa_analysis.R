@@ -3,40 +3,39 @@ rm(list = ls())
 
 library(dplyr)
 library(ggplot2)
+load("workspace.RData")
 
 source("moa_evaluations.R")
-
-load("workspace.RData")
 
 N <- 1000
 a <- NULL
 while(is.null(a)) {
   a <- tryCatch({
-    mean.res <- moa_recall(sm = cr.mean, metadata = metadata, n.cores = 3, N = N)}, error = function(e) {NULL})
+    mean.res <- moa_recall_fisher(sm = cr.mean, metadata = metadata)}, error = function(e) {NULL})
 }
 
 a <- NULL
 while(is.null(a)) {
   a <- tryCatch({
-    median.mad.cov.res <- moa_recall(sm = cr.median.mad.cov, metadata = metadata, n.cores = 3, N = N)}, error = function(e) {NULL})
+    median.mad.cov.res <- moa_recall_fisher(sm = cr.median.mad.cov, metadata = metadata)}, error = function(e) {NULL})
 }
 
 a <- NULL
 while(is.null(a)) {
   a <- tryCatch({
-    median.mad.2.res <- moa_recall(sm = cr.median.mad.2, metadata = metadata, n.cores = 3, N = N)}, error = function(e) {NULL})
+    median.mad.2.res <- moa_recall_fisher(sm = cr.median.mad.2, metadata = metadata)}, error = function(e) {NULL})
 }
 
 a <- NULL
 while(is.null(a)) {
   a <- tryCatch({
-    median.mad.res <- moa_recall(sm = cr.median.mad, metadata = metadata, n.cores = 3, N = N)}, error = function(e) {NULL})
+    median.mad.res <- moa_recall_fisher(sm = cr.median.mad, metadata = metadata)}, error = function(e) {NULL})
 }
 
 a <- NULL
 while(is.null(a)) {
   a <- tryCatch({
-    mix.res <- moa_recall(sm = cr.mix, metadata = metadata, n.cores = 3, N = N)}, error = function(e) {NULL})
+    mix.res <- moa_recall_fisher(sm = cr.mix, metadata = metadata)}, error = function(e) {NULL})
 }
 
 mean.n <- mean.res %>% filter(!is.na(p.value)) %>% mutate(p.value = p.adjust(p.value)) %>% filter(p.value < 0.05) %>% NROW()
