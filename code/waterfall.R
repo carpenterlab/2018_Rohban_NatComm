@@ -4,11 +4,16 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 
-MOA <- "hdac inhibitor"
-line.width <- 5
+MOA <- "dopamine receptor agonist"
+line.width <- 2
 snf.on.mean <- F
 
 sanitize <- function(a) {
+  a <- a %>%
+    group_by(Var1, Var2) %>%
+    slice(1) %>%
+    ungroup()
+  
   a.t <- c(a$Var1, a$Var2) %>% unique
   a.x <- a %>%
     select(Var1, Var2, value) %>%

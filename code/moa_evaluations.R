@@ -372,7 +372,7 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
       group_by(Var1, Metadata_moa.x) %>% 
       slice(1:k0) %>% 
       filter(value > thr) %>%
-      summarise(pass = ifelse(sum(same.moa(str_to_lower(Metadata_moa.x), str_to_lower(Metadata_moa.y))) >= 1, T, F)) %>% 
+      summarise(pass = ifelse(sum(same.moa(str_to_lower(Metadata_moa.x), str_to_lower(Metadata_moa.y))) >= 2, T, F)) %>% 
       filter(pass) 
   )
 }
