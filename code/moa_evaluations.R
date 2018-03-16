@@ -263,16 +263,22 @@ moa_recall_fisher <- function(sm, metadata) {
   return(res)
 }
 
-signif.test <- function(x, k0) {
+signif.test <- function(x, thr) {
+  sz <- x %>% filter(value > thr) %>% NROW()
+  
+  if (sz < 1) {
+    return(data.frame(MOA = NA, p.val = 1))  
+  }
+  
   moa.q <- str_split(x[1, "Metadata_moa.x"] %>% as.matrix() %>% as.vector(), "\\|") %>% unlist %>% unique 
-  moas <- data.frame(Metadata_moa.y = (str_split(x[1:k0, "Metadata_moa.y"] %>% as.matrix() %>% as.vector(), "\\|") %>% unlist()))
+  moas <- data.frame(Metadata_moa.y = (str_split(x %>% filter(value > thr) %>% select(Metadata_moa.y) %>% as.matrix() %>% as.vector(), "\\|") %>% unlist()))
   moas <- moas %>%
     group_by(Metadata_moa.y) %>%
     tally() %>%
     ungroup() %>%
     arrange(-n) 
 
-  moas.left <- data.frame(Metadata_moa.y = (str_split(x[(k0+1):NROW(x), "Metadata_moa.y"] %>% as.matrix() %>% as.vector(), "\\|") %>% unlist())) %>%
+  moas.left <- data.frame(Metadata_moa.y = (str_split(x %>% filter(value < thr) %>% select(Metadata_moa.y) %>% as.matrix() %>% as.vector(), "\\|") %>% unlist())) %>%
     group_by(Metadata_moa.y) %>%
     tally() %>%
     ungroup() %>%
@@ -363,8 +369,7 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
              | (Metadata_Plate_Map_Name.x != Metadata_Plate_Map_Name.y))
   }
   
-  #thr <- quantile(sm$value, 0.99, na.rm = T)
-  thr <- -Inf
+  thr <- quantile(sm$value, 0.99, na.rm = T)
   
   return(
     sm %>% 
@@ -378,7 +383,7 @@ cmpd_knn_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
 }
 
   
-cmpd_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
+cmpd_classification <- function(sm, metadata, thr.perc, not.same.batch = F) {
   sm <- sm %>% 
     reshape2::melt() %>% 
     filter(Var1 != Var2 &
@@ -390,20 +395,27 @@ cmpd_classification <- function(sm, metadata, k0 = 5, not.same.batch = F) {
     left_join(., 
               metadata, 
               by = c("Var2" = "Metadata_broad_sample")) %>%
-    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y))
+    filter(!is.na(Metadata_moa.x) & !is.na(Metadata_moa.y) & Metadata_moa.x != "" & Metadata_moa.y != "")
     #mutate(same.moa = same.moa(Metadata_moa.x, Metadata_moa.y))
 
+  if (not.same.batch) {
+    sm <- sm %>%
+      filter((is.na(Metadata_Plate_Map_Name.x) & !is.na(Metadata_Plate_Map_Name.y))
+             | (is.na(Metadata_Plate_Map_Name.y) & !is.na(Metadata_Plate_Map_Name.x))
+             | (Metadata_Plate_Map_Name.x != Metadata_Plate_Map_Name.y))
+  }
+  
+  thr <- quantile(sm$value, thr.perc, na.rm = T)
+  
   cmpd.true.pos <- sm %>% 
     arrange(-value) %>%
     group_by(Var1, Metadata_moa.x) %>%
-    do(signif.test(.[], k0)) %>%
-    #slice(1:k0) %>%
-    #summarise(pass = sum(same.moa(Metadata_moa.x, Metadata_moa.y)) >= thr) %>%
+    do(signif.test(.[], thr)) %>%
     ungroup() %>%
+    filter(!is.na(MOA)) %>%
     mutate(p.val = stats::p.adjust(p.val)) %>%
     mutate(pass = (p.val < 0.05) & same.moa(Metadata_moa.x, MOA)) 
   
-  #return(cmpd.true.pos/(sm$Var1 %>% unique %>% length))
   return(cmpd.true.pos)
 }
 

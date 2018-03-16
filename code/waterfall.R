@@ -4,7 +4,10 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 
-MOA <- "dopamine receptor agonist"
+MOA <- "TLR agonist"
+
+MOA <- str_to_lower(MOA)
+
 line.width <- 2
 snf.on.mean <- F
 
