@@ -42,9 +42,34 @@ signif.test <- function(sm1, sm2, top.perc, not.same.batch = F) {
   colnames(V) <- c("similar - validated", "non-similar - validated")
   print(V)
   
-  return(fisher.test(x = V, 
+  f1 <- (fisher.test(x = V, 
                      alternative = "greater"))
+
   
+  v11 <- sm1 %>%
+    filter(value > thr1 & same.moa) %>%
+    NROW
+  
+  v12 <- sm1 %>%
+    filter(value > thr1 & !same.moa) %>%
+    NROW
+  
+  v21 <- sm2 %>%
+    filter(value > thr2 & same.moa) %>%
+    NROW
+  
+  v22 <- sm2 %>%
+    filter(value > thr2 & !same.moa) %>%
+    NROW
+  
+  V <- rbind(c(v11, v12), c(v21, v22))
+  rownames(V) <- c("first data", "second data")
+  colnames(V) <- c("similar - validated", "similar - non-validated")
+  print(V)
+  
+  f2 <- (fisher.test(x = V, 
+                     alternative = "greater"))
+  return(list(f1, f2))
 }
 
 signif.test(sm.median.mad.cov, sm.median.mad.2, top.perc = 0.995, not.same.batch = not.same.batch)
