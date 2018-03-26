@@ -16,3 +16,4 @@ metadata/*
 backend/*
 tmp_trad/*
 *.RData
+tmp_sql/
