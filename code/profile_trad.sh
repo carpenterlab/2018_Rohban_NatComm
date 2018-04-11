@@ -9,4 +9,4 @@
 # CDRP, Repurposing, BBBC022; col = Metadata_broad_sample       norm value = DMSO
 
 
-parallel -j 1 './profile_trad.R --name=2016_12_13_Cytominer_Janssen --batch=BBBC022_2013 --plate={1} --operation="median+mad" --col="Metadata_broad_sample" --value="DMSO" --cores=2 --feats="../input/feature_list_BBBC022.txt"' ::: 20625 20608
+parallel -j 1 './profile_trad.R --name=2016_12_13_Cytominer_Janssen --batch=BBBC022_2013 --plate={1} --operation="median+mad" --col="Metadata_broad_sample" --value="DMSO" --cores=2 --feats="../input/feature_list_BBBC022.txt"' ::: processed_plates_BBBC022.txt
