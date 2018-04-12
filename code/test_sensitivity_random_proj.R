@@ -25,7 +25,7 @@ sdv <- apply(dmso.prf, 2, function(x) sd(x, na.rm = T))
 
 x <- scale(x, center = mn, scale = sdv)
 
-ndim <- c(seq(from = 1700, to = 3700, by = 400))
+ndim <- c(seq(from = 100, to = 500, by = 100), seq(from = 600, to = 1600, by = 200), seq(from = 1700, to = 3700, by = 400))
 #ndim <- c(100, 200)
 
 D <- foreach(ndim2 = ndim, .combine = rbind) %do% {
@@ -72,8 +72,9 @@ D <- foreach(ndim2 = ndim, .combine = rbind) %do% {
   data.frame(ndim = ndim2, mean.overlap = v1, std.overlap = v2)
 }
 
-ggplot(D, aes(x = ndim, y = mean.overlap)) + 
+g <- ggplot(D %>% mutate(mean.overlap = mean.overlap * 100, std.overlap = std.overlap * 100), aes(x = ndim, y = mean.overlap)) + 
   geom_errorbar(aes(ymin=mean.overlap-std.overlap/(20^0.5)*2, ymax=mean.overlap+std.overlap/(20^0.5)*2), width=50) + 
-  geom_line()
+  geom_line() + xlab("No. random projections") + ylab("Avg. overlap percentage \n of top 1% connections") + theme(axis.text = element_text(size=20), text = element_text(size=25)) + 
+  theme(plot.title = element_text(hjust = 0.5))
 
-saveRDS(D, "D_1700_to_3700.rds")
+ggsave("RP_stability.png", g)
