@@ -3,6 +3,7 @@
 ## Abstract ##
 Recent advances in single-cell resolution technologies warrants designing of computational methods that can capture cell heterogeneity beyond population averages. In this paper, we aim at adding measure of dispersion and feature covariances to the population average through data fusion techniques in the context of morphological profiling. In comparison to state-of-the-art, the proposed method provides substantial improvement (typically around 30%) in enrichment of treatment pairs with most similar profiles in having same Mechanisms of Action (MOA)/pathways.
 
+
 ## Prerequisites ##
 * Mac OS X
 * R Ver. 3.3.3 
