@@ -7,8 +7,18 @@ Recent advances in single-cell resolution technologies warrants designing of com
 ## Prerequisites ##
 * Mac OS X
 * R Ver. 3.3.3 
-* cytominer package (http://github.com/cytomining/cytominer)
-* aws command line interface (https://docs.aws.amazon.com/cli/latest/userguide/cli-install-macos.html) 
+* Following R packages: dplyr 0.7.4
+magrittr 1.5
+foreach 1.4.4
+stringr 1.2.0
+readr 1.1.1
+doParallel 1.0.11
+SNFtool 2.2
+ggplot2 2.2.1
+Matrix 1.2-8
+htmlTable 1.6
+cytominer 0.1.0.9000 (https://github.com/cytomining/cytominer)
+* aws command line interface (https://docs.aws.amazon.com/cli/latest/userguide/cli-install-macos.html) configured to access `imaging-platform` s3 bucket. 
 * Note : For each dataset, create a separate clone of the repository. Then, `cd code`
 
 ## Creating median+MAD profiles ##
