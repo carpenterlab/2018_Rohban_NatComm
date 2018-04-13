@@ -5,7 +5,6 @@ library(foreach)
 library(stringr)
 library(readr)
 library(doParallel)
-library(biotools)
 library(ggplot2)
 
 set.seed(24)
