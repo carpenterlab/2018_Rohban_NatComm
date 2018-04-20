@@ -105,7 +105,7 @@ metadata <- cr.melt.mean %>%
 
 metadata <- metadata %>% mutate(Metadata_moa = str_to_lower(Metadata_moa))
 
-cmpd_classification <- Vectorize(cmpd_classification, "k0")
+#cmpd_classification <- Vectorize(cmpd_classification, "k0")
 cmpd_knn_classification <- Vectorize(cmpd_knn_classification, "k0")
 
 if (enrichment.based.classification) {
