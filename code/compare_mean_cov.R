@@ -1,4 +1,18 @@
-rm(list = ls())
+#!/usr/bin/env Rscript
+args = commandArgs(trailingOnly = T)
+
+extends <- methods::extends
+
+'compare_mean_cov
+Usage:
+compare_mean_cov -p <perturbation_type>
+Options:
+-h --help                                         Show this screen.
+-p <perturbation_type> --pert=<perturbation_type> Either chemical or genetic' -> doc
+
+opts <- docopt::docopt(doc)
+
+p <- as.character(opts[["pert"]])
 
 library(dplyr)
 library(ggplot2)
@@ -9,8 +23,8 @@ enrichment.based.classification <- FALSE
 k.snf <- 7     # neighborhood size in SNF
 t <- 10
 k <- 1:10      # k top hits are used for classification
-genetic <- F
-not.same.batch <- T
+genetic <- (p == "genetic")
+not.same.batch <- !genetic
 snf.med.mad <- T
 
 if (genetic) {
