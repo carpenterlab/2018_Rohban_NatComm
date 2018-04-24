@@ -1,8 +1,7 @@
 # Capturing single-cell heterogeneity via data fusion improves morphological profiling #
 
 ## Abstract ##
-Recent advances in single-cell resolution technologies warrants designing of computational methods that can capture cell heterogeneity beyond population averages. In this paper, we aim at adding measure of dispersion and feature covariances to the population average through data fusion techniques in the context of morphological profiling. In comparison to state-of-the-art, the proposed method provides substantial improvement (typically around 30%) in enrichment of treatment pairs with most similar profiles in having same Mechanisms of Action (MOA)/pathways.
-
+Single-cell resolution technologies warrant computational methods that capture cell heterogeneity while allowing efficient comparisons of populations. Here, we summarize cell populations by adding features’ measures of dispersion and covariances to population averages, in the context of morphological profiling. We find that data fusion is critical for these metrics to improve results over the prior state-of-the-art, providing ~30% better performance in tasks including predicting a compound’s mechanism of action (MoA) and a gene’s pathway.
 
 ## Prerequisites ##
 * Mac OS X
@@ -22,12 +21,12 @@ cytominer 0.1.0.9000 (https://github.com/cytomining/cytominer)
 * Note : For each dataset, create a separate clone of the repository. Then, `cd code`
 
 ## Creating median+MAD profiles ##
-* BBBC022 : `parallel -j 1 './profile_trad.R --name=2016_12_13_Cytominer_Janssen --batch=BBBC022_2013 --plate={1} --operation="median+mad" --col="Metadata_broad_sample" --value="DMSO" --cores=2 --feats="../input/feature_list_BBBC022.txt"' :::: ../input/processed_plates_BBBC022.txt`
-* TA ORF : `parallel -j 1 './profile_trad.R --name=2011_07_13_TargetAccelerator_CancerProgram_MPG --batch=SIGMA2_Pilot_2013_10_11 --plate={1} --operation="median+mad" --col="Metadata_ASSAY_WELL_ROLE" --value="Untreated" --cores=2 --feats="../input/feature_list.txt"' :::: ../input/processed_plates_TA.txt`
-* CDRP : `parallel -j 1 './profile_trad.R --name=2015_Bray_GigaScience --batch=CDRP --plate={1} --operation="median+mad" --col="Metadata_broad_sample" --value="DMSO" --cores=2 --feats="../input/feature_list.txt"' :::: ../input/processed_plates_CDRP_bio.txt`
+* Bioactives-BBBC022-Gustafsdottir : `parallel -j 1 './profile_trad.R --name=2016_12_13_Cytominer_Janssen --batch=BBBC022_2013 --plate={1} --operation="median+mad" --col="Metadata_broad_sample" --value="DMSO" --cores=2 --feats="../input/feature_list_BBBC022.txt"' :::: ../input/processed_plates_BBBC022.txt`
+* TA-ORF-BBBC037-Rohban : `parallel -j 1 './profile_trad.R --name=2011_07_13_TargetAccelerator_CancerProgram_MPG --batch=SIGMA2_Pilot_2013_10_11 --plate={1} --operation="median+mad" --col="Metadata_ASSAY_WELL_ROLE" --value="Untreated" --cores=2 --feats="../input/feature_list.txt"' :::: ../input/processed_plates_TA.txt`
+* CDRPBIO-BBBC036-Bray : `parallel -j 1 './profile_trad.R --name=2015_Bray_GigaScience --batch=CDRP --plate={1} --operation="median+mad" --col="Metadata_broad_sample" --value="DMSO" --cores=2 --feats="../input/feature_list.txt"' :::: ../input/processed_plates_CDRP_bio.txt`
 
 ## Creating cov. profiles ##
-* BBBC022 : 
+* Bioactives-BBBC022-Gustafsdottir : 
 ``` 
 rm ../input/random_projection_unified.rds
 
@@ -36,11 +35,11 @@ mv ../input/random_projection_unified_BBBC022.rds ../input/random_projection_uni
 parallel -j 1 './profile.R --name=2016_12_13_Cytominer_Janssen --batch=BBBC022_2013 --plate={1} --dim=3000 --rdensity=0.1 --core=2 --col=Metadata_broad_sample --value="DMSO" --feats="../input/feature_list_BBBC022.txt"' :::: ../input/processed_plates_BBBC022.txt 
 
 ```
-* TA ORF : `parallel -j 1 './profile.R --name=2011_07_13_TargetAccelerator_CancerProgram_MPG --batch=SIGMA2_Pilot_2013_10_11 --plate={1} --dim=3000 --rdensity=0.1 --core=2 --col=Metadata_ASSAY_WELL_ROLE --value="Untreated" --feats="../input/feature_list.txt"' :::: ../input/processed_plates_TA.txt`
-* CDRP : `parallel -j 1 './profile.R --name=2015_Bray_GigaScience --batch=CDRP --plate={1} --dim=3000 --rdensity=0.1 --core=2 --col=Metadata_broad_sample --value="DMSO" --feats="../input/feature_list.txt"' :::: ../input/processed_plates_CDRP_bio.txt`
+* TA-ORF-BBBC037-Rohban : `parallel -j 1 './profile.R --name=2011_07_13_TargetAccelerator_CancerProgram_MPG --batch=SIGMA2_Pilot_2013_10_11 --plate={1} --dim=3000 --rdensity=0.1 --core=2 --col=Metadata_ASSAY_WELL_ROLE --value="Untreated" --feats="../input/feature_list.txt"' :::: ../input/processed_plates_TA.txt`
+* CDRPBIO-BBBC036-Bray : `parallel -j 1 './profile.R --name=2015_Bray_GigaScience --batch=CDRP --plate={1} --dim=3000 --rdensity=0.1 --core=2 --col=Metadata_broad_sample --value="DMSO" --feats="../input/feature_list.txt"' :::: ../input/processed_plates_CDRP_bio.txt`
 
 ## Creating the treatment correlation matrices ##
-* BBBC022 :
+* Bioactives-BBBC022-Gustafsdottir :
 ``` 
 ./evaluate.R -m "median" -p "../input/processed_plates_BBBC022.txt" -e ../input/metadata_BBBC022.csv -f "../input/feature_list_BBBC022.txt"
 
@@ -50,7 +49,7 @@ parallel -j 1 './profile.R --name=2016_12_13_Cytominer_Janssen --batch=BBBC022_2
 
 ./evaluate.R -m "median+mad" -p "../input/processed_plates_BBBC022.txt" -e ../input/metadata_BBBC022.csv -f "../input/feature_list_BBBC022.txt"
 ```
-* TA ORF :
+* TA-ORF-BBBC037-Rohban :
 ``` 
 ./evaluate.R -m "median" -p "../input/processed_plates_TA.txt" -e ../input/metadata_TA.csv -f "../input/feature_list.txt"
 
@@ -60,7 +59,7 @@ parallel -j 1 './profile.R --name=2016_12_13_Cytominer_Janssen --batch=BBBC022_2
 
 ./evaluate.R -m "median+mad" -p "../input/processed_plates_TA.txt" -e ../input/metadata_TA.csv -f "../input/feature_list.txt"
 ```
-* CDRP :
+* CDRPBIO-BBBC036-Bray :
 ``` 
 ./evaluate.R -m "median" -p "../input/processed_plates_CDRP_bio.txt" -e ../input/metadata_CDRP.csv -f "../input/feature_list.txt"
 
@@ -72,5 +71,6 @@ parallel -j 1 './profile.R --name=2016_12_13_Cytominer_Janssen --batch=BBBC022_2
 ```
 
 ## Generating Fig. 1 (enrichment comparison plot) ##
-* Run `compare_mean_cov.R` 
+* Run `./compare_mean_cov.R -p chemical` for Bioactives-BBBC022-Gustafsdottir and CDRPBIO-BBBC036-Bray
+* Run `./compare_mean_cov.R -p genetic` for TA-ORF-BBBC037-Rohban
 
