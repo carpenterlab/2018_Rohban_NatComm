@@ -22,7 +22,7 @@ profile.plate.traditional.2 <- function(pl, project.name, batch.name, operation,
   out.file <- paste0(out.path, "/", pl, ".csv")
   
   if (!file.exists(sql.path)) {
-    system(command = paste0("aws s3 cp 's3://imaging-platform/projects/",
+    system(command = paste0("aws s3 cp 's3://cellpainting-datasets/",
                             project.name, 
                             "/workspace/backend/",
                             batch.name,
@@ -35,7 +35,7 @@ profile.plate.traditional.2 <- function(pl, project.name, batch.name, operation,
   }
   
   if (!file.exists(paste0("../input/", pl, "_normalized.csv"))) {
-    system(command = paste0("aws s3 cp 's3://imaging-platform/projects/",
+    system(command = paste0("aws s3 cp 's3://cellpainting-datasets/",
                             project.name, 
                             "/workspace/backend/",
                             batch.name,
