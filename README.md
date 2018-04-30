@@ -73,7 +73,9 @@ parallel -j 1 './profile.R --name=Bioactives-BBBC022-Gustafsdottir --batch=BBBC0
 
 ```
 
-## Generating Fig. 1 (enrichment comparison plot) ##
+## Generating Fig. 1A (enrichment comparison plot) ##
 * Run `./compare_mean_cov.R -p chemical` for Bioactives-BBBC022-Gustafsdottir and CDRPBIO-BBBC036-Bray
 * Run `./compare_mean_cov.R -p genetic` for TA-ORF-BBBC037-Rohban
 
+## Generating Fig. 1B (similarity graphs for an MOA) ##
+* Run `sub_corr_plot.R` for CDRPBIO-BBBC036-Bray

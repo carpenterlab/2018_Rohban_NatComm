@@ -4,6 +4,7 @@ library(dplyr)
 library(ggplot2)
 library(stringr)
 library(corrplot)
+library(igraph)
 
 load("workspace.RData")
 set.seed(24)
