@@ -18,3 +18,5 @@ tmp_trad/*
 *.RData
 tmp_sql/
 code/*.rds
+code/*.pdf
+code/moa_plots*
