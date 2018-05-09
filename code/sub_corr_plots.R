@@ -71,34 +71,63 @@ for (moa in setdiff(moas, NA)) {
 
   n <- NROW(cr.median.mad.cov.nrm)
 
-    par(mfrow=c(1, 4))
-    corrplot::corrplot(cr.median.mad.cov.nrm[1:n, 1:n], method = "color", order = method, title = "median+MAD+cov.", mar=c(0,0,20,0))
-    corrplot::corrplot(cr.mean.nrm[1:n, 1:n], method = "color", order = method, title = "median", mar=c(0,0,20,0))
-    corrplot::corrplot(cr.mad.nrm[1:n, 1:n], method = "color", order = method, title = "MAD", mar=c(0,0,20,0))
-    corrplot::corrplot(cr.cov.nrm[1:n, 1:n], method = "color", order = method, title = "cov.", mar=c(0,0,20,0))
-    dev.print(device = pdf, sprintf("moa_plots/%s.pdf", moa))
+    #par(mfrow=c(1, 4))
+    #corrplot::corrplot(cr.median.mad.cov.nrm[1:n, 1:n], method = "color", order = method, title = "median+MAD+cov.", mar=c(0,0,20,0))
+    #corrplot::corrplot(cr.mean.nrm[1:n, 1:n], method = "color", order = method, title = "median", mar=c(0,0,20,0))
+    #corrplot::corrplot(cr.mad.nrm[1:n, 1:n], method = "color", order = method, title = "MAD", mar=c(0,0,20,0))
+    #corrplot::corrplot(cr.cov.nrm[1:n, 1:n], method = "color", order = method, title = "cov.", mar=c(0,0,20,0))
+    #dev.print(device = pdf, sprintf("moa_plots/%s.pdf", moa))
 
+    png(file=sprintf("moa_plots/graph_%s_top95.png", moa),width=15*27*5,height=12*27*5)
     par(mfrow=c(1, 4))
     A <- 1.0 * (cr.median.mad.cov.nrm[1:n, 1:n] > 0.95)
     diag(A) <- 0
     g <- graph_from_adjacency_matrix(adjmatrix = A, mode = "undirected")
     l1 <- layout_nicely(g)
-    plot(g, layout = l1, vertex.size=3, edge.width = 3, vertex.label.dist=1)
+    plot(g, layout = l1, vertex.size=3, edge.width = 6, vertex.label.dist=1)
     
     A <- 1.0 * (cr.mean.nrm[1:n, 1:n] > 0.95)
     diag(A) <- 0
     g <- graph_from_adjacency_matrix(adjmatrix = A, mode = "undirected")
-    plot(g, layout = l1, vertex.size=3, edge.width = 3, vertex.label.dist=1)
+    plot(g, layout = l1, vertex.size=3, edge.width = 6, vertex.label.dist=1)
     
     A <- 1.0 * (cr.mad.nrm[1:n, 1:n] > 0.95)
     diag(A) <- 0
     g <- graph_from_adjacency_matrix(adjmatrix = A, mode = "undirected")
-    plot(g, layout = l1, vertex.size=3, edge.width = 3, vertex.label.dist=1)
+    plot(g, layout = l1, vertex.size=3, edge.width = 6, vertex.label.dist=1)
     
     A <- 1.0 * (cr.cov.nrm[1:n, 1:n] > 0.95)
     diag(A) <- 0
     g <- graph_from_adjacency_matrix(adjmatrix = A, mode = "undirected")
-    plot(g, layout = l1, vertex.size=3, edge.width = 3, vertex.label.dist=1)
+    plot(g, layout = l1, vertex.size=3, edge.width = 6, vertex.label.dist=1)
+    dev.off()
     
-    dev.print(device = pdf, sprintf("moa_plots/graph_%s.pdf", moa))
+    png(file=sprintf("moa_plots/graph_%s_weighted.png", moa),width=15*27*5,height=12*27*5)
+    sigma_weight <- 20
+    par(mfrow=c(1, 4))
+    A <- exp((-1 + cr.median.mad.cov.nrm[1:n, 1:n]) * sigma_weight) * 2
+    diag(A) <- 0
+    g <- graph_from_adjacency_matrix(adjmatrix = A, mode = "undirected", weighted = TRUE)
+    E(g)$width <- E(g)$weight * 3 
+    plot(g, layout = l1, vertex.size=3, vertex.label.dist=1)
+    
+    A <- exp((-1 + cr.mean.nrm[1:n, 1:n]) * sigma_weight) * 2
+    diag(A) <- 0
+    g <- graph_from_adjacency_matrix(adjmatrix = A, mode = "undirected", weighted = TRUE)
+    E(g)$width <- E(g)$weight * 3 
+    plot(g, layout = l1, vertex.size=3, vertex.label.dist=1)
+    
+    A <- exp((-1 + cr.mad.nrm[1:n, 1:n]) * sigma_weight) * 2
+    diag(A) <- 0
+    g <- graph_from_adjacency_matrix(adjmatrix = A, mode = "undirected", weighted = TRUE)
+    E(g)$width <- E(g)$weight * 3 
+    plot(g, layout = l1, vertex.size=3, vertex.label.dist=1)
+    
+    A <- exp((-1 + cr.cov.nrm[1:n, 1:n]) * sigma_weight) * 2
+    diag(A) <- 0
+    g <- graph_from_adjacency_matrix(adjmatrix = A, mode = "undirected", weighted = TRUE)
+    E(g)$width <- E(g)$weight * 3 
+    plot(g, layout = l1, vertex.size=3, vertex.label.dist=1)
+    
+    dev.off()
 }
