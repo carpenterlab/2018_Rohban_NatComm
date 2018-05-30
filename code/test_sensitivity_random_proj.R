@@ -77,8 +77,10 @@ D <- D2 %>% group_by(ndim) %>% summarise(mean.overlap = mean(overlap), std.overl
 D3 <- D2 %>% left_join(D, by = "ndim")
 
 g <- ggplot(D3 %>% mutate(mean.overlap = mean.overlap * 100, std.overlap = std.overlap * 100, overlap = overlap * 100), aes(x = ndim, y = mean.overlap)) + 
-  geom_errorbar(aes(ymin=mean.overlap-std.overlap/(20^0.5)*2, ymax=mean.overlap+std.overlap/(20^0.5)*2), width=50) + geom_jitter(aes(x = ndim, y = overlap), size = 0.2) + 
+  geom_errorbar(aes(ymin=mean.overlap-std.overlap/(20^0.5)*2, ymax=mean.overlap+std.overlap/(20^0.5)*2), width=50) + geom_jitter(aes(x = ndim, y = overlap), size = 0.05) + 
   geom_line() + xlab("No. random projections") + ylab("Avg. overlap percentage \n of top 1% connections") + theme(axis.text = element_text(size=20), text = element_text(size=25)) + 
   theme(plot.title = element_text(hjust = 0.5)) 
 
 ggsave("RP_stability.png", g)
+ggsave("RP_stability.pdf", g)
+
