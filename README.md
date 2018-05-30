@@ -18,7 +18,9 @@ Matrix 1.2-8
 htmlTable 1.6
 cytominer 0.1.0.9000 (https://github.com/cytomining/cytominer)
 * aws command line interface (https://docs.aws.amazon.com/cli/latest/userguide/cli-install-macos.html) configured to access `cellpainting-datasets` s3 bucket. 
-* Note : For each dataset, create a separate clone of the repository. Then, `cd code`
+* Note : For each dataset, create a separate clone of the repository. Then, `cd code`.
+
+* Note : TA-ORF-BBBC037-Rohban is the smallest dataset consisting of only around 5 plates, so can also be used for the demo purposes. Each plate takes on average between 2 to 3 hours to get processed on a normal PC. Bioactives-BBBC022-Gustafsdottir and CDRPBIO-BBBC036-Bray consist of 20 and 55 plates, respectively. 
 
 ## Creating median+MAD profiles ##
 * Bioactives-BBBC022-Gustafsdottir : `parallel -j 1 './profile_trad.R --name=Bioactives-BBBC022-Gustafsdottir --batch=BBBC022_2013 --plate={1} --operation="median+mad" --col="Metadata_broad_sample" --value="DMSO" --cores=2 --feats="../input/feature_list_BBBC022.txt"' :::: ../input/processed_plates_BBBC022.txt`
