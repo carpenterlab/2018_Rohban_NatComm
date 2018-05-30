@@ -12,6 +12,36 @@ library(doParallel)
 pl <- "24278"
 nrm.column <- "Metadata_broad_sample"
 nrm.value <- "DMSO"
+
+project.name <- "CDRPBIO-BBBC036-Bray"
+batch.name <- "CDRP"
+
+dir.create("../tmp_sql")
+
+system(command = paste0("aws s3 cp 's3://cellpainting-datasets/",
+                        project.name, 
+                        "/workspace/backend/",
+                        batch.name,
+                        "/", 
+                        pl, 
+                        "/", 
+                        pl, 
+                        ".sqlite' ../tmp_sql/",
+                        pl,
+                        ".sqlite"))
+
+system(command = paste0("aws s3 cp 's3://cellpainting-datasets/",
+                        project.name, 
+                        "/workspace/backend/",
+                        batch.name,
+                        "/", 
+                        pl, 
+                        "/", 
+                        pl, 
+                        "_normalized.csv' ../tmp_sql/",
+                        pl,
+                        "_normalized.csv"))
+
 feat.list <- readr::read_csv("../input/feature_list.txt", col_names = F) %>% as.matrix() %>% as.vector()
 
 prf <- readr::read_csv(paste0("../tmp_sql/",
