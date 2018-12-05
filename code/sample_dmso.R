@@ -116,7 +116,7 @@ for (p in 1:length(plate.list)) {
   train_indx <- sample(seq_len(nrow(dmso)), size = sample_size)
   dmso <- dmso[train_indx, ]
   readr::write_csv(dmso, paste0("../FA/dmso/", plate.list[p], "_dmso", ".csv"))
-  #system(paste0(paste0("rm ", sql.path)))
+  system(paste0(paste0("rm ", sql.path)))
 }
 
 # combining all dmso cells collected from each replicate plate
