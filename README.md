@@ -16,6 +16,7 @@ SNFtool 2.2
 ggplot2 2.2.1
 Matrix 1.2-8
 htmlTable 1.6
+readbulk 1.1.0
 cytominer 0.1.0.9000 (https://github.com/cytomining/cytominer)
 * aws command line interface (https://docs.aws.amazon.com/cli/latest/userguide/cli-install-macos.html) configured to access `cellpainting-datasets` s3 bucket. 
 * Package installation time is about an hour on a typical PC. 
