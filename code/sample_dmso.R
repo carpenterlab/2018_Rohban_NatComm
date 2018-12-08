@@ -5,7 +5,7 @@ extends <- methods::extends
 
 'sampe_dmso
 Usage:
-sampe_dmso -n <project_name> -b <batch_name> -p <plate_list_path> -f <feat_list_path> -m <metadata_path>
+sampe_dmso -n <project_name> -b <batch_name> -p <plate_list_path> -f <feat_list_path> -m <metadata_path> -l <norm_column> -v <norm_value>
 
 Options:
 -h --help                                         Show this screen.
@@ -14,6 +14,8 @@ Options:
 -p <plate_list_path> --plate=<plate_list_path>    Path of the plate list.
 -f <feat_list_path> --feats=<feat_list_path>      Path to the file containing the list of features. 
 -m <metadata_path> --meta=<metadata_path>         Path to the metadata file.
+-l <norm_column> --col=<norm_column>              Column name to be used to select samples for normalization.
+-v <norm_value> --value=<norm_value>              Value of the mentioned column which indicates the sample.
 ' -> doc
 
 opts <- docopt::docopt(doc)
@@ -23,6 +25,8 @@ batch.name <- opts[["batch"]]
 feat.list.path <- opts[["feats"]] 
 metadata.path <- opts[["meta"]] 
 project.name <- opts[["name"]]
+col.name <- opts[["col"]]
+col.val <- opts[["value"]]
 
 library(dplyr)
 library(magrittr)
@@ -40,12 +44,6 @@ library(readbulk)
 
 feat.list <- read.table(feat.list.path, header = F) %>% as.matrix() %>% as.vector() %>% unlist() %>% unname()
 plate.list <- read.table(plate.list.path, header = F) %>% as.matrix() %>% as.vector() %>% unlist()
-
-#batch.name = "SIGMA2_Pilot_2013_10_11"
-# Selecting only column features from the defined feature list
-#feat.list <- read.table("../input/feature_list.txt", header = F) %>% as.matrix() %>% as.vector() %>% unlist() %>% unname()
-#plate.list <- read.table("../input/processed_plates_TA.txt", header = F) %>% as.matrix() %>% as.vector() %>% unlist()
-#metadata.df <- data.frame(readr::read_csv("../input/metadata_TA.csv"),  stringsAsFactors =F)
 variables <- feat.list
 
 dir.create("../FA/dmso/", recursive = T)
@@ -109,8 +107,9 @@ for (p in 1:length(plate.list)) {
   
   metadata <- colnames(sql_data)[which(str_detect(colnames(sql_data), "Metadata_"))]
   dmso <- sql_data %>%
-    filter(Metadata_ASSAY_WELL_ROLE == "Untreated") %>%
+    filter((!!rlang::sym(col.name)) == col.val) %>%
     dplyr::collect()
+  
   set.seed(123)
   sample_size <- 455
   train_indx <- sample(seq_len(nrow(dmso)), size = sample_size)
