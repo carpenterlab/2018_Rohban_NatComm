@@ -20,3 +20,6 @@ tmp_sql/
 code/*.rds
 code/*.pdf
 code/moa_plots*
+FA/*
+PCA/*
+.DS_Store
