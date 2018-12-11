@@ -42,6 +42,58 @@ parallel -j 1 './profile.R --name=Bioactives-BBBC022-Gustafsdottir --batch=BBBC0
 * TA-ORF-BBBC037-Rohban : `parallel -j 1 './profile.R --name=TA-ORF-BBBC037-Rohban --batch=SIGMA2_Pilot_2013_10_11 --plate={1} --dim=3000 --rdensity=0.1 --core=2 --col=Metadata_ASSAY_WELL_ROLE --value="Untreated" --feats="../input/feature_list.txt"' :::: ../input/processed_plates_TA.txt`
 * CDRPBIO-BBBC036-Bray : `parallel -j 1 './profile.R --name=CDRPBIO-BBBC036-Bray --batch=CDRP --plate={1} --dim=3000 --rdensity=0.1 --core=2 --col=Metadata_broad_sample --value="DMSO" --feats="../input/feature_list.txt"' :::: ../input/processed_plates_CDRP_bio.txt`
 
+## Creating Factor Analysis profiles and their correlation matrices ##
+* Bioactives-BBBC022-Gustafsdottir : 
+``` 
+./sample_dmso.R --name=Bioactives-BBBC022-Gustafsdottir --batch=BBBC022_2013 --plate="../input/processed_plates_BBBC022.txt" --feats="../input/feature_list_BBBC022.txt" --col="Metadata_broad_sample" --value="DMSO"
+
+./profile_factor_analysis.R --name=Bioactives-BBBC022-Gustafsdottir --batch=BBBC022_2013 --plate="../input/processed_plates_BBBC022.txt" --feats="../input/feature_list_BBBC022.txt" --col="Metadata_broad_sample" --value="DMSO"
+
+./evaluate_factor_analysis.R --name=Bioactives-BBBC022-Gustafsdottir --batch=BBBC022_2013 --plate="../input/processed_plates_BBBC022.txt" --feats="../input/feature_list_BBBC022.txt" --meta="../input/metadata_BBBC022.csv" --col="Metadata_broad_sample" --value="DMSO"
+
+```
+* TA-ORF-BBBC037-Rohban : 
+``` 
+./sample_dmso.R --name=TA-ORF-BBBC037-Rohban --batch=SIGMA2_Pilot_2013_10_11 --plate="../input/processed_plates_TA.txt" --feats="../input/feature_list.txt" --col="Metadata_ASSAY_WELL_ROLE" --value="Untreated"
+
+./profile_factor_analysis.R --name=TA-ORF-BBBC037-Rohban --batch=SIGMA2_Pilot_2013_10_11 --plate="../input/processed_plates_TA.txt" --feats="../input/feature_list.txt" --col="Metadata_ASSAY_WELL_ROLE" --value="Untreated"
+
+./evaluate_factor_analysis.R --name=TA-ORF-BBBC037-Rohban --batch=SIGMA2_Pilot_2013_10_11 --plate="../input/processed_plates_TA.txt" --feats="../input/feature_list.txt" --meta="../input/metadata_TA.csv" --col="Metadata_ASSAY_WELL_ROLE" --value="Untreated"
+
+```
+* CDRPBIO-BBBC036-Bray : 
+``` 
+./sample_dmso.R --name=CDRPBIO-BBBC036-Bray --batch=CDRP --plate="../input/processed_plates_CDRP_bio.txt" --feats="../input/feature_list.txt" --col="Metadata_broad_sample" --value="DMSO"
+
+./profile_factor_analysis.R --name=CDRPBIO-BBBC036-Bray --batch=CDRP --plate="../input/processed_plates_CDRP_bio.txt" --feats="../input/feature_list.txt" --col="Metadata_broad_sample" --value="DMSO"
+
+./evaluate_factor_analysis.R --name=CDRPBIO-BBBC036-Bray --batch=CDRP --plate="../input/processed_plates_CDRP_bio.txt" --feats="../input/feature_list.txt" --meta="../input/metadata_CDRP.csv" --col="Metadata_broad_sample" --value="DMSO"
+
+```
+
+## Creating PCA profiles and their correlation matrices ##
+* Bioactives-BBBC022-Gustafsdottir : 
+``` 
+./profile_pca.R --name=Bioactives-BBBC022-Gustafsdottir --batch=BBBC022_2013 --plate="../input/processed_plates_BBBC022.txt" --feats="../input/feature_list_BBBC022.txt" --col="Metadata_broad_sample" --value="DMSO"
+
+./evaluate_pca.R --name=Bioactives-BBBC022-Gustafsdottir --batch=BBBC022_2013 --plate="../input/processed_plates_BBBC022.txt" --feats="../input/feature_list_BBBC022.txt" --meta="../input/metadata_BBBC022.csv" --col="Metadata_broad_sample" --value="DMSO"
+
+```
+* TA-ORF-BBBC037-Rohban : 
+``` 
+./profile_pca.R --name=TA-ORF-BBBC037-Rohban --batch=SIGMA2_Pilot_2013_10_11 --plate="../input/processed_plates_TA.txt" --feats="../input/feature_list.txt" --col="Metadata_ASSAY_WELL_ROLE" --value="Untreated"
+
+./evaluate_pca.R --name=TA-ORF-BBBC037-Rohban --batch=SIGMA2_Pilot_2013_10_11 --plate="../input/processed_plates_TA.txt" --feats="../input/feature_list.txt" --meta="../input/metadata_TA.csv" --col="Metadata_ASSAY_WELL_ROLE" --value="Untreated"
+
+```
+* CDRPBIO-BBBC036-Bray : 
+``` 
+./profile_pca.R --name=CDRPBIO-BBBC036-Bray --batch=CDRP --plate="../input/processed_plates_CDRP_bio.txt" --feats="../input/feature_list.txt" --col="Metadata_broad_sample" --value="DMSO"
+
+./evaluate_pca.R --name=CDRPBIO-BBBC036-Bray --batch=CDRP --plate="../input/processed_plates_CDRP_bio.txt" --feats="../input/feature_list.txt" --meta="../input/metadata_CDRP.csv" --col="Metadata_broad_sample" --value="DMSO"
+
+```
+
 ## Creating the treatment correlation matrices ##
 * Bioactives-BBBC022-Gustafsdottir :
 ``` 
@@ -83,3 +135,7 @@ parallel -j 1 './profile.R --name=Bioactives-BBBC022-Gustafsdottir --batch=BBBC0
 
 ## Generating Fig. 1B (similarity graphs for an MOA) ##
 * Run `sub_corr_plot.R` for CDRPBIO-BBBC036-Bray
+
+## Generating Supplementary Fig. 1 (enrichment comparison plot) ##
+* Run `./compare_mean_cov_filteredMoA.R -p chemical` for Bioactives-BBBC022-Gustafsdottir and CDRPBIO-BBBC036-Bray
+* Run `./compare_mean_cov_filteredMoA.R -p genetic` for TA-ORF-BBBC037-Rohban
