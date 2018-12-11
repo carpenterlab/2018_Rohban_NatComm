@@ -5,7 +5,7 @@ extends <- methods::extends
 
 'sampe_dmso
 Usage:
-sampe_dmso -n <project_name> -b <batch_name> -p <plate_list_path> -f <feat_list_path> -m <metadata_path> -l <norm_column> -v <norm_value>
+sampe_dmso -n <project_name> -b <batch_name> -p <plate_list_path> -f <feat_list_path> -l <norm_column> -v <norm_value>
 
 Options:
 -h --help                                         Show this screen.
@@ -13,7 +13,6 @@ Options:
 -b <batch_name> --batch=<batch_name>              Batch name. 
 -p <plate_list_path> --plate=<plate_list_path>    Path of the plate list.
 -f <feat_list_path> --feats=<feat_list_path>      Path to the file containing the list of features. 
--m <metadata_path> --meta=<metadata_path>         Path to the metadata file.
 -l <norm_column> --col=<norm_column>              Column name to be used to select samples for normalization.
 -v <norm_value> --value=<norm_value>              Value of the mentioned column which indicates the sample.
 ' -> doc
@@ -23,7 +22,6 @@ opts <- docopt::docopt(doc)
 plate.list.path <- opts[["plate"]] 
 batch.name <- opts[["batch"]] 
 feat.list.path <- opts[["feats"]] 
-metadata.path <- opts[["meta"]] 
 project.name <- opts[["name"]]
 col.name <- opts[["col"]]
 col.val <- opts[["value"]]
@@ -115,7 +113,7 @@ for (p in 1:length(plate.list)) {
   train_indx <- sample(seq_len(nrow(dmso)), size = sample_size)
   dmso <- dmso[train_indx, ]
   readr::write_csv(dmso, paste0("../FA/dmso/", plate.list[p], "_dmso", ".csv"))
-  system(paste0(paste0("rm ", sql.path)))
+  #system(paste0(paste0("rm ", sql.path)))
 }
 
 # combining all dmso cells collected from each replicate plate
