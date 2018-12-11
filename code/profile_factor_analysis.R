@@ -5,7 +5,7 @@ extends <- methods::extends
 
 'profile_factor_analysis
 Usage:
-profile_factor_analysis -n <project_name> -b <batch_name> -p <plate_list_path> -f <feat_list_path> -m <metadata_path> -l <norm_column> -v <norm_value>
+profile_factor_analysis -n <project_name> -b <batch_name> -p <plate_list_path> -f <feat_list_path> -l <norm_column> -v <norm_value>
 
 Options:
 -h --help                                         Show this screen.
@@ -13,7 +13,6 @@ Options:
 -b <batch_name> --batch=<batch_name>              Batch name. 
 -p <plate_list_path> --plate=<plate_list_path>    Path of the plate list.
 -f <feat_list_file> --feats=<feat_list_file>      Path to the file containing the list of features. 
--m <metadata_path> --meta=<metadata_path>         Path to the metadata file.
 -l <norm_column> --col=<norm_column>              Column name to be used to select samples for normalization.
 -v <norm_value> --value=<norm_value>              Value of the mentioned column which indicates the sample.
 ' -> doc
@@ -23,7 +22,6 @@ opts <- docopt::docopt(doc)
 plate.list.path <- opts[["plate"]] 
 batch.name <- opts[["batch"]] 
 feat.list.path <- opts[["feats"]] 
-metadata.path <- opts[["meta"]] 
 project.name <- opts[["name"]]
 col.name <- opts[["col"]]
 col.val <- opts[["value"]]
@@ -43,7 +41,6 @@ library(readbulk)
 
 feat.list <- read.table(feat.list.path, header = F) %>% as.matrix() %>% as.vector() %>% unlist() %>% unname()
 plate.list <- read.table(plate.list.path, header = F) %>% as.matrix() %>% as.vector() %>% unlist()
-metadata.df <- data.frame(metadata.path,  stringsAsFactors =F)
 variables <- feat.list
 
 # Combining all the metadata information from normalized csv of all plates
@@ -127,9 +124,7 @@ for (i in 1:length(plate.list)) {
   sql_data <- sql_data %>%
     select(image.col, variables) %>%
     dplyr::collect()
-  
-  #system(paste0(paste0("rm ", sql.path)))
-  
+
   # removing NAs
   sql_data[is.na(sql_data)] <- 0
   sql_data <- merge(sql_data, pmeta,
@@ -142,6 +137,8 @@ for (i in 1:length(plate.list)) {
   dmso <- sql_data %>%
     filter((!!rlang::sym(col.name)) == col.val) %>%
     dplyr::collect()
+  
+  #system(paste0(paste0("rm ", sql.path)))
   
   # calculating mean and standard_deviation of control condition
   mn <- apply(dmso %>% select(one_of(variables)), 2, function(x) mean(x, na.rm = T))
