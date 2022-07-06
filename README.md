@@ -3,6 +3,16 @@
 ## Abstract ##
 Single-cell resolution technologies warrant computational methods that capture cell heterogeneity while allowing efficient comparisons of populations. Here, we summarize cell populations by adding features’ measures of dispersion and covariances to population averages, in the context of morphological profiling. We find that data fusion is critical for these metrics to improve results over the prior state-of-the-art, providing ~30% better performance in tasks including predicting a compound’s mechanism of action (MoA) and a gene’s pathway.
 
+
+**Note:**
+
+Our paper says
+
+> Extracted image-based features are publicly available in the following s3 bucket s3://cellpainting-datasets under folders corresponding to the respective names of the datasets.
+
+We moved the files from `s3://cellpainting-datasets` to `s3://cellpainting-gallery/cpg0015-heterogeneity/broad/workspace/supplementary/` in June 2022.
+
+
 ## Prerequisites ##
 * Mac OS X
 * R Ver. 3.3.3 
